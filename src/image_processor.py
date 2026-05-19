@@ -199,6 +199,59 @@ def _wrap_text_lines(text, font, max_width):
     return result
 
 
+# Standard IJG luminance quantization table at Q=50.
+# Used to estimate the quality setting of an existing JPEG.
+_STD_LUM_Q = [
+    16, 11, 10, 16, 24, 40, 51, 61,
+    12, 12, 14, 19, 26, 58, 60, 55,
+    14, 13, 16, 24, 40, 57, 69, 56,
+    14, 17, 22, 29, 51, 87, 80, 62,
+    18, 22, 37, 56, 68, 109, 103, 77,
+    24, 35, 55, 64, 81, 104, 113, 92,
+    49, 64, 78, 87, 103, 121, 120, 101,
+    72, 92, 95, 98, 112, 100, 103, 99
+]
+
+
+def _estimate_jpeg_quality(image_path):
+    """Estimate the JPEG quality setting from quantization tables.
+
+    Uses the IJG standard quantization table scaling formula to back-solve
+    for the quality factor. Returns an integer in [1, 100], or None if
+    estimation fails (e.g. non-JPEG input or missing tables).
+    """
+    try:
+        with Image.open(image_path) as im:
+            qt = im.quantization
+        if not qt:
+            return None
+
+        # Use luminance table (key 0). Some JPEGs only have chrominance (key 1).
+        q_vals = qt.get(0) or qt.get(1)
+        if not q_vals or len(q_vals) != 64:
+            return None
+
+        total_q = sum(q_vals)
+        total_std = sum(_STD_LUM_Q)
+        if total_std == 0:
+            return None
+
+        avg_ratio = total_q / total_std
+
+        # IJG formula inversion:
+        #   Q >= 50: scale = 200 - 2*Q  → Q = 100 - scale/2
+        #   Q <  50: scale = 5000 / Q   → Q = 5000 / scale
+        # average scale ≈ avg_ratio * 100
+        if avg_ratio <= 1.0:
+            quality = round(100 - 50 * avg_ratio)
+        else:
+            quality = round(50 / avg_ratio)
+
+        return max(1, min(100, quality))
+    except Exception:
+        return None
+
+
 def process_image(image_path, border_config, logos_config, text_lines,
                   global_text_config, exif_data, output_path=None):
     """
@@ -217,7 +270,9 @@ def process_image(image_path, border_config, logos_config, text_lines,
         PIL.Image object
     """
     # Open original image
-    if image_path.lower().endswith('.arw'):
+    _FALLBACK_QUALITY = 98
+    is_raw = image_path.lower().endswith('.arw')
+    if is_raw:
         import rawpy
         with rawpy.imread(image_path) as raw:
             rgb = raw.postprocess()
@@ -257,7 +312,8 @@ def process_image(image_path, border_config, logos_config, text_lines,
                         global_text_config, exif_data)
 
     if output_path:
-        canvas.save(output_path, quality=95)
+        save_quality = _FALLBACK_QUALITY if is_raw else (_estimate_jpeg_quality(image_path) or _FALLBACK_QUALITY)
+        canvas.save(output_path, quality=save_quality)
 
     return canvas
 
