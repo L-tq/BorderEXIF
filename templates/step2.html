@@ -90,6 +90,7 @@
                 <div class="radio-group">
                     <label><input type="radio" name="borderMode" value="custom" checked onchange="onBorderModeChange()"> Custom dimensions</label>
                     <label><input type="radio" name="borderMode" value="aspect_ratio" onchange="onBorderModeChange()"> Fixed aspect ratio</label>
+                    <label><input type="radio" name="borderMode" value="target_ratio" onchange="onBorderModeChange()"> Target aspect ratio</label>
                 </div>
                 <div id="borderCustom">
                     <div class="form-row"><label>Top (px)</label><input type="number" id="borderTop" value="100" min="0" onchange="debouncePreview()"></div>
@@ -108,6 +109,23 @@
                     <div class="form-row"><label>Sides a (px)</label><input type="number" id="aspectA" value="80" min="0" onchange="debouncePreview()"></div>
                     <div class="form-row"><label>Top b (px)</label><input type="number" id="aspectB" value="100" min="0" onchange="debouncePreview()"></div>
                     <div class="form-row"><label>Bottom c (px)</label><input type="number" id="aspectC" value="200" min="0" onchange="debouncePreview()" disabled></div>
+                </div>
+                <div id="borderTargetRatio" style="display:none;">
+                    <div class="form-row"><label>Target ratio</label>
+                        <input type="number" id="targetW" value="16" min="1" onchange="debouncePreview()" style="width:55px;">
+                        <span>:</span>
+                        <input type="number" id="targetH" value="9" min="1" onchange="debouncePreview()" style="width:55px;">
+                    </div>
+                    <div class="form-row"><label>Auto-calc</label>
+                        <select id="targetAutoParam" onchange="debouncePreview()">
+                            <option value="c">Bottom (c)</option>
+                            <option value="b">Top (b)</option>
+                            <option value="a">Sides (a)</option>
+                        </select>
+                    </div>
+                    <div class="form-row"><label>Sides a (px)</label><input type="number" id="targetA" value="80" min="0" onchange="debouncePreview()"></div>
+                    <div class="form-row"><label>Top b (px)</label><input type="number" id="targetB" value="0" min="0" onchange="debouncePreview()"></div>
+                    <div class="form-row"><label>Bottom c (px)</label><input type="number" id="targetC" value="200" min="0" onchange="debouncePreview()" disabled></div>
                 </div>
                 <div class="form-row" style="margin-top:8px;"><label>Color</label><input type="color" id="borderColor" value="#FFFFFF" onchange="debouncePreview()"></div>
             </div>

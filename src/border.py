@@ -82,6 +82,80 @@ def calculate_border_aspect_ratio(img_w, img_h, auto_param, a=None, b=None, c=No
         raise ValueError(f'Invalid auto_param: {auto_param}. Must be a, b, or c.')
 
 
+def calculate_border_target_ratio(img_w, img_h, target_w, target_h, auto_param, a=None, b=None, c=None):
+    """
+    Calculate border dimensions to achieve a target aspect ratio for the final image.
+
+    Formula: target_h * (W + 2*a) = target_w * (H + b + c)
+
+    User provides two of (a, b, c), the target ratio (target_w:target_h),
+    and selects which border parameter to auto-calculate.
+
+    Args:
+        img_w: Original image width
+        img_h: Original image height
+        target_w: Target aspect ratio width component
+        target_h: Target aspect ratio height component
+        auto_param: 'a', 'b', or 'c' - which parameter to auto-calculate
+        a: Left/right border width (same on both sides)
+        b: Top border height
+        c: Bottom border height
+
+    Returns:
+        dict with 'top', 'bottom', 'left', 'right'
+    """
+    if target_w <= 0 or target_h <= 0:
+        raise ValueError('Target aspect ratio dimensions must be positive')
+
+    if auto_param == 'a':
+        if b is None or c is None:
+            raise ValueError('b and c are required when auto-calculating a')
+        b_val, c_val = float(b), float(c)
+        if target_h == 0:
+            a_val = 0
+        else:
+            a_val = (target_w * (img_h + b_val + c_val) / target_h - img_w) / 2.0
+        return {
+            'top': max(0, int(b_val)),
+            'bottom': max(0, int(c_val)),
+            'left': max(0, int(a_val)),
+            'right': max(0, int(a_val)),
+        }
+
+    elif auto_param == 'b':
+        if a is None or c is None:
+            raise ValueError('a and c are required when auto-calculating b')
+        a_val, c_val = float(a), float(c)
+        if target_w == 0:
+            b_val = 0
+        else:
+            b_val = target_h * (img_w + 2 * a_val) / target_w - img_h - c_val
+        return {
+            'top': max(0, int(b_val)),
+            'bottom': max(0, int(c_val)),
+            'left': max(0, int(a_val)),
+            'right': max(0, int(a_val)),
+        }
+
+    elif auto_param == 'c':
+        if a is None or b is None:
+            raise ValueError('a and b are required when auto-calculating c')
+        a_val, b_val = float(a), float(b)
+        if target_w == 0:
+            c_val = 0
+        else:
+            c_val = target_h * (img_w + 2 * a_val) / target_w - img_h - b_val
+        return {
+            'top': max(0, int(b_val)),
+            'bottom': max(0, int(c_val)),
+            'left': max(0, int(a_val)),
+            'right': max(0, int(a_val)),
+        }
+
+    else:
+        raise ValueError(f'Invalid auto_param: {auto_param}. Must be a, b, or c.')
+
+
 def get_final_dimensions(img_w, img_h, border):
     """Get the final image dimensions after adding borders."""
     return (

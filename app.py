@@ -31,7 +31,7 @@ def safe_filename(filename):
 
 from src.config_manager import load_config, save_config
 from src.exif_reader import read_exif
-from src.border import calculate_border_custom, calculate_border_aspect_ratio
+from src.border import calculate_border_custom, calculate_border_aspect_ratio, calculate_border_target_ratio
 from src.image_processor import process_image, generate_preview
 
 def _get_secret_key():
@@ -375,6 +375,32 @@ def _resolve_border(border_cfg, image_path):
             result = calculate_border_aspect_ratio(img_w, img_h, auto_param, a, b, c)
             result['color'] = color
             result['mode'] = 'aspect_ratio'
+            return result
+        except ValueError:
+            return {'top': 0, 'bottom': 0, 'left': 0, 'right': 0, 'color': color, 'mode': 'custom'}
+
+    elif mode == 'target_ratio':
+        if image_path.lower().endswith('.arw'):
+            import rawpy
+            with rawpy.imread(image_path) as raw:
+                img_w = raw.sizes.raw_width
+                img_h = raw.sizes.raw_height
+        else:
+            from PIL import Image as PILImage, ImageOps
+            with ImageOps.exif_transpose(PILImage.open(image_path)) as im:
+                img_w, img_h = im.size
+
+        auto_param = border_cfg.get('auto_param', 'c')
+        a = border_cfg.get('a')
+        b = border_cfg.get('b')
+        c = border_cfg.get('c')
+        target_w = border_cfg.get('target_w', 16)
+        target_h = border_cfg.get('target_h', 9)
+
+        try:
+            result = calculate_border_target_ratio(img_w, img_h, target_w, target_h, auto_param, a, b, c)
+            result['color'] = color
+            result['mode'] = 'target_ratio'
             return result
         except ValueError:
             return {'top': 0, 'bottom': 0, 'left': 0, 'right': 0, 'color': color, 'mode': 'custom'}

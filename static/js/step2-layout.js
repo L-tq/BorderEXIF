@@ -123,6 +123,12 @@ function initBorderMode() {
     document.getElementById('aspectA').value = (b.a != null) ? b.a : ((b.left != null) ? b.left : 80);
     document.getElementById('aspectB').value = (b.b != null) ? b.b : ((b.top != null) ? b.top : 100);
     document.getElementById('aspectC').value = (b.c != null) ? b.c : ((b.bottom != null) ? b.bottom : 200);
+    document.getElementById('targetW').value = b.target_w || 16;
+    document.getElementById('targetH').value = b.target_h || 9;
+    document.getElementById('targetAutoParam').value = b.auto_param || 'c';
+    document.getElementById('targetA').value = (b.a != null) ? b.a : ((b.left != null) ? b.left : 80);
+    document.getElementById('targetB').value = (b.b != null) ? b.b : ((b.top != null) ? b.top : 0);
+    document.getElementById('targetC').value = (b.c != null) ? b.c : ((b.bottom != null) ? b.bottom : 200);
 
     document.getElementById('lineSpacing').value = config.line_spacing || 1.3;
     document.getElementById('textMarginLeft').value = config.text_margin_left || 40;
@@ -137,8 +143,10 @@ function onBorderModeChange() {
     const mode = document.querySelector('input[name="borderMode"]:checked').value;
     document.getElementById('borderCustom').style.display = mode === 'custom' ? 'block' : 'none';
     document.getElementById('borderAspect').style.display = mode === 'aspect_ratio' ? 'block' : 'none';
+    document.getElementById('borderTargetRatio').style.display = mode === 'target_ratio' ? 'block' : 'none';
     config.border.mode = mode;
     updateAutoParamState();
+    updateTargetAutoParamState();
     debouncePreview();
 }
 
@@ -149,8 +157,20 @@ function updateAutoParamState() {
     document.getElementById('aspectC').disabled = autoParam === 'c';
 }
 
+function updateTargetAutoParamState() {
+    const autoParam = document.getElementById('targetAutoParam').value;
+    document.getElementById('targetA').disabled = autoParam === 'a';
+    document.getElementById('targetB').disabled = autoParam === 'b';
+    document.getElementById('targetC').disabled = autoParam === 'c';
+}
+
 document.getElementById('autoParam').addEventListener('change', () => {
     updateAutoParamState();
+    debouncePreview();
+});
+
+document.getElementById('targetAutoParam').addEventListener('change', () => {
+    updateTargetAutoParamState();
     debouncePreview();
 });
 
@@ -415,9 +435,25 @@ function getCurrentBorderConfig() {
     const bottom = parseInt(document.getElementById('borderBottom').value);
     const left = parseInt(document.getElementById('borderLeft').value);
     const right = parseInt(document.getElementById('borderRight').value);
-    const a = parseInt(document.getElementById('aspectA').value);
-    const b = parseInt(document.getElementById('aspectB').value);
-    const c = parseInt(document.getElementById('aspectC').value);
+
+    let a, b_val, c_val, auto_param, target_w, target_h;
+
+    if (mode === 'target_ratio') {
+        a = parseInt(document.getElementById('targetA').value);
+        b_val = parseInt(document.getElementById('targetB').value);
+        c_val = parseInt(document.getElementById('targetC').value);
+        auto_param = document.getElementById('targetAutoParam').value;
+        target_w = parseInt(document.getElementById('targetW').value);
+        target_h = parseInt(document.getElementById('targetH').value);
+    } else {
+        a = parseInt(document.getElementById('aspectA').value);
+        b_val = parseInt(document.getElementById('aspectB').value);
+        c_val = parseInt(document.getElementById('aspectC').value);
+        auto_param = document.getElementById('autoParam').value;
+        target_w = config?.border?.target_w || 16;
+        target_h = config?.border?.target_h || 9;
+    }
+
     return {
         mode: mode,
         top: isNaN(top) ? 0 : top,
@@ -425,10 +461,12 @@ function getCurrentBorderConfig() {
         left: isNaN(left) ? 0 : left,
         right: isNaN(right) ? 0 : right,
         color: document.getElementById('borderColor').value,
-        auto_param: document.getElementById('autoParam').value,
+        auto_param: auto_param,
         a: isNaN(a) ? 0 : a,
-        b: isNaN(b) ? 0 : b,
-        c: isNaN(c) ? 0 : c,
+        b: isNaN(b_val) ? 0 : b_val,
+        c: isNaN(c_val) ? 0 : c_val,
+        target_w: isNaN(target_w) ? 16 : target_w,
+        target_h: isNaN(target_h) ? 9 : target_h,
     };
 }
 

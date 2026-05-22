@@ -13,7 +13,9 @@ DEFAULT_CONFIG = {
         'left': 80,
         'right': 80,
         'color': '#FFFFFF',
-        'auto_param': 'c'
+        'auto_param': 'c',
+        'target_w': 16,
+        'target_h': 9,
     },
     'logos': [],
     'text_lines': [
