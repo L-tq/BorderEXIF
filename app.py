@@ -493,6 +493,12 @@ def render_images():
     session_dir = get_session_dir()
     temp_dir = get_temp_dir()
 
+    # Remove stale rendered files from previous sessions, so download-all
+    # only includes images rendered in this batch.
+    for old in os.listdir(temp_dir):
+        if old.startswith('rendered_'):
+            os.remove(os.path.join(temp_dir, old))
+
     rendered = []
     for fname in sorted(os.listdir(session_dir)):
         if not allowed_file(fname):
