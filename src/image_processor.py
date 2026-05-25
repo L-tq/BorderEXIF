@@ -253,7 +253,8 @@ def _estimate_jpeg_quality(image_path):
 
 
 def process_image(image_path, border_config, logos_config, text_lines,
-                  global_text_config, exif_data, output_path=None):
+                  global_text_config, exif_data, output_path=None,
+                  scale_config=None):
     """
     Render the full image with borders, logos, and text.
 
@@ -265,6 +266,8 @@ def process_image(image_path, border_config, logos_config, text_lines,
         global_text_config: dict with line_spacing, margins
         exif_data: dict of EXIF tag values
         output_path: If provided, save to this path
+        scale_config: Optional dict with 'enabled', 'width', 'height' to resize
+                      the original image before applying borders.
 
     Returns:
         PIL.Image object
@@ -283,6 +286,15 @@ def process_image(image_path, border_config, logos_config, text_lines,
             original = original.convert('RGB')
 
     img_w, img_h = original.size
+
+    # Apply image scaling if enabled
+    scale_cfg = scale_config or {}
+    if scale_cfg.get('enabled'):
+        target_w = int(scale_cfg.get('width', img_w))
+        target_h = int(scale_cfg.get('height', img_h))
+        if target_w > 0 and target_h > 0 and (target_w, target_h) != (img_w, img_h):
+            original = original.resize((target_w, target_h), Image.LANCZOS)
+            img_w, img_h = original.size
 
     # Calculate border
     b = border_config
@@ -555,11 +567,12 @@ def _draw_text_overlays(canvas, img_w, img_h, border, text_lines,
 
 
 def generate_preview(image_path, border_config, logos_config, text_lines,
-                     global_text_config, exif_data, max_dim=1200):
+                     global_text_config, exif_data, max_dim=1200,
+                     scale_config=None):
     """Generate a low-resolution preview image."""
     img = process_image(
         image_path, border_config, logos_config, text_lines,
-        global_text_config, exif_data
+        global_text_config, exif_data, scale_config=scale_config
     )
     # Resize for preview
     w, h = img.size

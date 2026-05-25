@@ -77,7 +77,8 @@ async function renderAll() {
             text_margin_right: config.text_margin_right || 40,
             text_margin_bottom: config.text_margin_bottom || 30,
             text_lines_spacing: config.text_lines_spacing || 8,
-        }
+        },
+        scale: config.scale || {}
     };
 
     try {

@@ -285,6 +285,7 @@ def generate_preview_api():
     logos_cfg = data.get('logos', [])
     text_lines = data.get('text_lines', data.get('text_elements', []))
     global_text_cfg = data.get('global_text', {})
+    scale_cfg = data.get('scale', {})
 
     session_dir = get_session_dir()
     temp_dir = get_temp_dir()
@@ -313,7 +314,7 @@ def generate_preview_api():
         preview = generate_preview(
             image_path, border_final, resolved_logos,
             text_lines, global_text_cfg, exif,
-            max_dim=900
+            max_dim=900, scale_config=scale_cfg
         )
         preview_id = uuid.uuid4().hex[:8]
         output_name = f'preview_{preview_id}_{_jpg_name(safe_name)}'
@@ -487,6 +488,7 @@ def render_images():
     logos_cfg = data.get('logos', [])
     text_lines = data.get('text_lines', data.get('text_elements', []))
     global_text_cfg = data.get('global_text', {})
+    scale_cfg = data.get('scale', {})
 
     session_dir = get_session_dir()
     temp_dir = get_temp_dir()
@@ -517,7 +519,7 @@ def render_images():
             process_image(
                 image_path, border_final, resolved_logos,
                 text_lines, global_text_cfg, exif,
-                output_path=output_path
+                output_path=output_path, scale_config=scale_cfg
             )
             rendered.append({
                 'filename': output_name,

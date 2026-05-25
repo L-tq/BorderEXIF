@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadImages();
     populateImageSelector();
     initBorderMode();
+    initScaleConfig();
     renderLogos();
     renderTextLines();
 });
@@ -173,6 +174,48 @@ document.getElementById('targetAutoParam').addEventListener('change', () => {
     updateTargetAutoParamState();
     debouncePreview();
 });
+
+// --- Image Scaling ---
+function getScaleConfig() {
+    const enabled = document.getElementById('scaleEnabled').checked;
+    return {
+        enabled: enabled,
+        width: parseInt(document.getElementById('scaleWidth').value) || 0,
+        height: parseInt(document.getElementById('scaleHeight').value) || 0,
+    };
+}
+
+function onScaleToggle() {
+    const enabled = document.getElementById('scaleEnabled').checked;
+    document.getElementById('scaleDimensions').style.display = enabled ? 'block' : 'none';
+    debouncePreview();
+}
+
+function updateOriginalSizeLabel() {
+    const select = document.getElementById('previewImageSelect');
+    const filename = select?.value;
+    const img = images.find(i => i.filename === filename);
+    const label = document.getElementById('originalSizeLabel');
+    if (img && img.width && img.height) {
+        label.textContent = `${img.width} x ${img.height} px`;
+        // Reset scale dimensions to this image's original size
+        const enabled = document.getElementById('scaleEnabled').checked;
+        if (!enabled) {
+            document.getElementById('scaleWidth').value = img.width;
+            document.getElementById('scaleHeight').value = img.height;
+        }
+    } else {
+        label.textContent = '—';
+    }
+}
+
+function initScaleConfig() {
+    const sc = config?.scale || {};
+    document.getElementById('scaleEnabled').checked = sc.enabled || false;
+    if (sc.width) document.getElementById('scaleWidth').value = sc.width;
+    if (sc.height) document.getElementById('scaleHeight').value = sc.height;
+    onScaleToggle();
+}
 
 // --- Logos ---
 function renderLogos() {
@@ -421,10 +464,13 @@ function onDragEnd(e) {
 // --- Preview ---
 function populateImageSelector() {
     const select = document.getElementById('previewImageSelect');
-    select.innerHTML = images.map((img, i) =>
-        `<option value="${esc(img.filename)}" ${i === 0 ? 'selected' : ''}>${esc(img.filename)}</option>`
-    ).join('');
+    select.innerHTML = images.map((img, i) => {
+        const dims = (img.width && img.height) ? ` (${img.width}x${img.height})` : '';
+        return `<option value="${esc(img.filename)}" ${i === 0 ? 'selected' : ''}>${esc(img.filename)}${dims}</option>`;
+    }).join('');
+    select.addEventListener('change', updateOriginalSizeLabel);
     if (images.length > 0) {
+        updateOriginalSizeLabel();
         setTimeout(() => debouncePreview(), 200);
     }
 }
@@ -498,7 +544,8 @@ async function generatePreview() {
         border: getCurrentBorderConfig(),
         logos: config?.logos || [],
         text_lines: config?.text_lines || [],
-        global_text: getGlobalTextConfig()
+        global_text: getGlobalTextConfig(),
+        scale: getScaleConfig()
     };
 
     try {
@@ -542,6 +589,8 @@ async function saveConfig() {
         config.text_margin_right = _intVal('textMarginRight', 40);
         config.text_margin_bottom = _intVal('textMarginBottom', 30);
         config.text_lines_spacing = _intVal('linesGap', 8);
+        if (!config.scale) config.scale = {};
+        Object.assign(config.scale, getScaleConfig());
 
         await fetch('/api/config', {
             method: 'POST',

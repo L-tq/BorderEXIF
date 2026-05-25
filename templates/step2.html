@@ -130,6 +130,25 @@
                 <div class="form-row" style="margin-top:8px;"><label>Color</label><input type="color" id="borderColor" value="#FFFFFF" onchange="debouncePreview()"></div>
             </div>
 
+            <!-- Image Scaling -->
+            <div class="panel" id="scalePanel">
+                <h3>Image Scaling</h3>
+                <div style="font-size:0.8rem; color:#888; margin-bottom:8px;">
+                    Original size: <strong id="originalSizeLabel">—</strong>
+                </div>
+                <div class="form-row">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="scaleEnabled" onchange="onScaleToggle()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span style="font-size:0.85rem; margin-left:6px;">Resize image</span>
+                </div>
+                <div id="scaleDimensions" style="display:none; margin-top:8px;">
+                    <div class="form-row"><label>Width (px)</label><input type="number" id="scaleWidth" value="1920" min="1" onchange="debouncePreview()"></div>
+                    <div class="form-row"><label>Height (px)</label><input type="number" id="scaleHeight" value="1080" min="1" onchange="debouncePreview()"></div>
+                </div>
+            </div>
+
             <!-- Logos -->
             <div class="panel">
                 <h3>Logos</h3>
