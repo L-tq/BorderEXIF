@@ -1,158 +1,153 @@
-/* Step 3: Review and download */
+/* Step 3: Review and download — client-side only */
 
-let renderedImages = [];
-let currentSessionId = '';
+(function () {
+  let renderedBlobs = [];
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadImagesForReview();
-});
+  function initStep3() {
+    loadImagesForReview();
+  }
 
-async function loadImagesForReview() {
-    try {
-        const resp = await fetch('/api/images');
-        const data = await resp.json();
-        const grid = document.getElementById('reviewGrid');
-        grid.innerHTML = '';
+  function loadImagesForReview() {
+    const grid = document.getElementById('reviewGrid');
+    grid.innerHTML = '';
+    const images = AppState.images;
 
-        if (!data.images || data.images.length === 0) {
-            grid.innerHTML = '<p style="color:#888;">No images uploaded. Go back to Step 1 to select images.</p>';
-            document.getElementById('btnRender').disabled = true;
-            return;
-        }
-
-        for (const img of data.images) {
-            const card = document.createElement('div');
-            card.className = 'review-card';
-            card.id = 'card-' + img.filename.replace(/[^a-zA-Z0-9]/g, '_');
-            card.innerHTML = `
-                <div style="background:#f5f5f5; min-height:150px; display:flex; align-items:center; justify-content:center; border-radius:4px; color:#aaa; font-size:0.9rem;">
-                    Pending render
-                </div>
-                <div class="info">
-                    <strong>${esc(img.filename)}</strong><br>
-                    ${img.width}×${img.height} | ${esc(img.camera_model || '—')}<br>
-                    ${esc(img.lens_model || '')} ${esc(img.focal_length || '')} ${esc(img.aperture || '')}
-                </div>
-            `;
-            grid.appendChild(card);
-        }
-    } catch (e) {
-        console.error('Failed to load images', e);
+    if (!images || images.length === 0) {
+      grid.innerHTML = '<p style="color:#888;">No images loaded. Go back to Step 1 to select images.</p>';
+      document.getElementById('btnRender').disabled = true;
+      return;
     }
-}
 
-async function renderAll() {
+    document.getElementById('btnRender').disabled = false;
+
+    for (const img of images) {
+      const card = document.createElement('div');
+      card.className = 'review-card';
+      card.id = 'card-' + img.filename.replace(/[^a-zA-Z0-9]/g, '_');
+      card.innerHTML = `
+        <div style="background:#f5f5f5; min-height:150px; display:flex; align-items:center; justify-content:center; border-radius:4px; color:#aaa; font-size:0.9rem;">
+          Pending render
+        </div>
+        <div class="info">
+          <strong>${esc(img.filename)}</strong><br>
+          ${img.width}×${img.height} | ${esc(img.exif.camera_model || '—')}<br>
+          ${esc(img.exif.lens_model || '')} ${esc(img.exif.focal_length || '')} ${esc(img.exif.aperture || '')}
+        </div>
+      `;
+      grid.appendChild(card);
+    }
+  }
+
+  window.renderAll = async function () {
     const btnRender = document.getElementById('btnRender');
     const btnDownloadAll = document.getElementById('btnDownloadAll');
     const progressBar = document.getElementById('progressBar');
     const progressFill = document.getElementById('progressFill');
     const statusMsg = document.getElementById('statusMsg');
 
+    const images = AppState.images;
+    const config = AppState.config;
+
+    if (!images || images.length === 0) {
+      statusMsg.textContent = 'No images to render.';
+      return;
+    }
+
     btnRender.disabled = true;
     progressBar.style.display = 'block';
-    progressFill.style.width = '10%';
-    statusMsg.textContent = 'Loading configuration...';
-
-    // Load config
-    let config;
-    try {
-        const resp = await fetch('/api/config');
-        config = await resp.json();
-    } catch (e) {
-        statusMsg.textContent = 'Failed to load config.';
-        btnRender.disabled = false;
-        return;
-    }
-
-    progressFill.style.width = '20%';
+    progressFill.style.width = '0%';
     statusMsg.textContent = 'Rendering images...';
 
-    const payload = {
-        border: config.border || {},
-        logos: config.logos || [],
-        text_lines: config.text_lines || [],
-        global_text: {
-            line_spacing: config.line_spacing || 1.3,
-            text_margin_left: config.text_margin_left || 40,
-            text_margin_right: config.text_margin_right || 40,
-            text_margin_bottom: config.text_margin_bottom || 30,
-            text_lines_spacing: config.text_lines_spacing || 8,
-        },
-        scale: config.scale || {}
-    };
-
     try {
-        const resp = await fetch('/api/render', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await resp.json();
-        renderedImages = data.rendered || [];
+      renderedBlobs = await ImageRenderer.renderAll(images, config, (current, total, filename) => {
+        const pct = Math.round((current / total) * 100);
+        progressFill.style.width = pct + '%';
+        statusMsg.textContent = `Rendering ${current + 1}/${total}: ${filename}`;
+      });
 
-        progressFill.style.width = '100%';
+      progressFill.style.width = '100%';
 
-        if (renderedImages.length === 0) {
-            statusMsg.textContent = 'No images were rendered.';
-            btnRender.disabled = false;
-            progressBar.style.display = 'none';
-            return;
-        }
-
-        statusMsg.textContent = `Rendered ${renderedImages.length} image(s).`;
-
-        // Update review grid
-        const grid = document.getElementById('reviewGrid');
-        grid.innerHTML = '';
-
-        for (const img of renderedImages) {
-            const card = document.createElement('div');
-            card.className = 'review-card';
-            if (img.error) {
-                card.innerHTML = `
-                    <div style="color:#e74c3c; padding:20px; text-align:center;">
-                        Error: ${esc(img.error)}
-                    </div>
-                    <div class="info"><strong>${esc(img.original)}</strong></div>
-                `;
-            } else {
-                card.innerHTML = `
-                    <img src="${img.download_url}" alt="${esc(img.original)}" loading="lazy">
-                    <div class="info">
-                        <strong>${esc(img.original)}</strong>
-                        <br>
-                        <a href="${img.download_url}" class="download-btn" download>Download</a>
-                    </div>
-                `;
-            }
-            grid.appendChild(card);
-        }
-
-        btnDownloadAll.style.display = 'inline-block';
+      if (renderedBlobs.length === 0) {
+        statusMsg.textContent = 'No images were rendered.';
         btnRender.disabled = false;
         progressBar.style.display = 'none';
+        return;
+      }
+
+      const successCount = renderedBlobs.filter(r => r.blob).length;
+      statusMsg.textContent = `Rendered ${successCount}/${renderedBlobs.length} image(s).`;
+
+      // Update review grid
+      const grid = document.getElementById('reviewGrid');
+      grid.innerHTML = '';
+
+      for (const img of renderedBlobs) {
+        const card = document.createElement('div');
+        card.className = 'review-card';
+        if (img.error) {
+          card.innerHTML = `
+            <div style="color:#e74c3c; padding:20px; text-align:center;">
+              Error: ${esc(img.error)}
+            </div>
+            <div class="info"><strong>${esc(img.filename)}</strong></div>
+          `;
+        } else {
+          const url = URL.createObjectURL(img.blob);
+          card.innerHTML = `
+            <img src="${url}" alt="${esc(img.filename)}" loading="lazy">
+            <div class="info">
+              <strong>${esc(img.filename)}</strong>
+              <br>
+              <a href="${url}" class="download-btn" download="${img.filename}">Download</a>
+            </div>
+          `;
+        }
+        grid.appendChild(card);
+      }
+
+      btnDownloadAll.style.display = 'inline-block';
+      btnRender.disabled = false;
+      progressBar.style.display = 'none';
 
     } catch (err) {
-        statusMsg.textContent = 'Render failed: ' + err.message;
-        btnRender.disabled = false;
-        progressBar.style.display = 'none';
+      statusMsg.textContent = 'Render failed: ' + err.message;
+      btnRender.disabled = false;
+      progressBar.style.display = 'none';
     }
-}
+  };
 
-function downloadAll() {
-    // Extract session ID from the first download URL
-    if (renderedImages.length > 0 && renderedImages[0].download_url) {
-        const match = renderedImages[0].download_url.match(/\/api\/download\/([^/]+)\//);
-        if (match) {
-            window.location.href = `/api/download-all/${match[1]}`;
-            return;
-        }
+  window.downloadAll = async function () {
+    if (renderedBlobs.length === 0) {
+      alert('Please render images first.');
+      return;
     }
-    // Fallback
-    alert('Please render images first.');
-}
 
-function esc(s) {
+    const zip = new JSZip();
+    for (const { filename, blob } of renderedBlobs) {
+      if (blob) zip.file(filename, blob);
+    }
+
+    const statusMsg = document.getElementById('statusMsg');
+    statusMsg.textContent = 'Creating ZIP file...';
+
+    try {
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'exifborder_output.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+      statusMsg.textContent = 'ZIP download started.';
+    } catch (err) {
+      statusMsg.textContent = 'Failed to create ZIP: ' + err.message;
+    }
+  };
+
+  function esc(s) {
     if (s === null || s === undefined) return '';
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+  }
+
+  window.initStep3 = initStep3;
+})();

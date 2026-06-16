@@ -1,114 +1,33 @@
-/* Step 2: Layout setup and preview */
+/* Step 2: Layout setup and preview — client-side only */
 
-let config = null;
-let images = [];
-let previewTimer = null;
-let availableExifTags = [];
+(function () {
+  let config = null;
+  let previewTimer = null;
+  let prevPreviewUrl = null;
 
-const COMMON_EXIF_TAGS = [
+  const COMMON_EXIF_TAGS = [
     'Camera Make', 'Camera Model', 'Lens Make', 'Lens Model',
     'Focal Length', 'Aperture', 'ISO', 'Exposure Time', 'F-Number',
     'Date/Time', 'Artist', 'Software', 'GPS'
-];
+  ];
+  const FONT_FAMILIES = ['Roboto', 'Source Han Sans'];
+  const FONT_WEIGHTS = ['normal', 'bold', 'thin', 'light', 'medium'];
+  const FONT_STYLES = ['normal', 'italic'];
 
-const FONT_FAMILIES = ['Roboto', 'Source Han Sans'];
-const FONT_WEIGHTS = ['normal', 'bold', 'thin', 'light', 'medium'];
-const FONT_STYLES = ['normal', 'italic'];
-
-// --- Init ---
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadConfig();
-    await loadImages();
-    populateImageSelector();
+  function initStep2() {
+    config = AppState.loadConfig();
     initBorderMode();
     initScaleConfig();
     renderLogos();
     renderTextLines();
-});
+    populateImageSelector();
+  }
 
-async function loadConfig() {
-    try {
-        const resp = await fetch('/api/config');
-        config = await resp.json();
-        // Migrate old format if needed
-        if (!config.text_lines && config.text_elements) {
-            config.text_lines = migrateOldElements(config.text_elements);
-        }
-        // Migrate old line-level font settings to per-part format
-        if (config.text_lines) {
-            config.text_lines = config.text_lines.map(migrateTextLine);
-        }
-    } catch (e) {
-        console.error('Failed to load config', e);
-    }
-}
+  document.addEventListener('DOMContentLoaded', initStep2);
+  window.initStep2 = initStep2;
 
-async function loadImages() {
-    try {
-        const resp = await fetch('/api/images');
-        const data = await resp.json();
-        images = data.images || [];
-        const tagSet = new Set(COMMON_EXIF_TAGS);
-        for (const img of images) {
-            if (img.all_tags) {
-                Object.keys(img.all_tags).forEach(t => tagSet.add(t));
-            }
-        }
-        availableExifTags = Array.from(tagSet).sort();
-    } catch (e) {
-        console.error('Failed to load images', e);
-    }
-}
-
-function migrateOldElements(elements) {
-    // Convert old text_elements to new text_lines format
-    const sorted = [...elements].sort((a, b) => (a.order || 0) - (b.order || 0));
-    const lines = [];
-    for (const elem of sorted) {
-        if (!elem.visible) continue;
-        let text = elem.value || '';
-        if (!text && elem.label) {
-            text = '{' + elem.label + '}';
-        }
-        const part = {
-            text: text,
-            font_family: elem.font_family || 'Roboto',
-            font_size: elem.font_size || 22,
-            font_color: elem.font_color || '#333333',
-            font_weight: elem.font_weight || 'normal',
-            font_style: elem.font_style || 'normal',
-        };
-        lines.push({
-            left: { ...part, text: text },
-            center: { ...part, text: '' },
-            right: { ...part, text: '' },
-        });
-    }
-    return lines.length > 0 ? lines : null;
-}
-
-function migrateTextLine(line) {
-    // Convert old-format line (string parts + line-level font) to new format
-    // where each part is an object with its own font settings.
-    if (line.left !== null && line.left !== undefined && typeof line.left === 'object') {
-        return line;
-    }
-    const defaults = {
-        font_family: line.font_family || 'Roboto',
-        font_size: line.font_size || 22,
-        font_color: line.font_color || '#333333',
-        font_weight: line.font_weight || 'normal',
-        font_style: line.font_style || 'normal',
-    };
-    return {
-        left: { text: line.left || '', ...defaults },
-        center: { text: line.center || '', ...defaults },
-        right: { text: line.right || '', ...defaults },
-    };
-}
-
-// --- Border ---
-function initBorderMode() {
+  // --- Border ---
+  function initBorderMode() {
     if (!config || !config.border) return;
     const b = config.border;
     const mode = b.mode || 'custom';
@@ -138,9 +57,9 @@ function initBorderMode() {
     document.getElementById('linesGap').value = config.text_lines_spacing || 8;
 
     onBorderModeChange();
-}
+  }
 
-function onBorderModeChange() {
+  window.onBorderModeChange = function () {
     const mode = document.querySelector('input[name="borderMode"]:checked').value;
     document.getElementById('borderCustom').style.display = mode === 'custom' ? 'block' : 'none';
     document.getElementById('borderAspect').style.display = mode === 'aspect_ratio' ? 'block' : 'none';
@@ -149,183 +68,161 @@ function onBorderModeChange() {
     updateAutoParamState();
     updateTargetAutoParamState();
     debouncePreview();
-}
+  };
 
-function updateAutoParamState() {
+  function updateAutoParamState() {
     const autoParam = document.getElementById('autoParam').value;
     document.getElementById('aspectA').disabled = autoParam === 'a';
     document.getElementById('aspectB').disabled = autoParam === 'b';
     document.getElementById('aspectC').disabled = autoParam === 'c';
-}
-
-function updateTargetAutoParamState() {
+  }
+  function updateTargetAutoParamState() {
     const autoParam = document.getElementById('targetAutoParam').value;
     document.getElementById('targetA').disabled = autoParam === 'a';
     document.getElementById('targetB').disabled = autoParam === 'b';
     document.getElementById('targetC').disabled = autoParam === 'c';
-}
+  }
 
-document.getElementById('autoParam').addEventListener('change', () => {
-    updateAutoParamState();
-    debouncePreview();
-});
+  document.getElementById('autoParam').addEventListener('change', () => { updateAutoParamState(); debouncePreview(); });
+  document.getElementById('targetAutoParam').addEventListener('change', () => { updateTargetAutoParamState(); debouncePreview(); });
 
-document.getElementById('targetAutoParam').addEventListener('change', () => {
-    updateTargetAutoParamState();
-    debouncePreview();
-});
-
-// --- Image Scaling ---
-function getScaleConfig() {
+  // --- Image Scaling ---
+  function getScaleConfig() {
     const enabled = document.getElementById('scaleEnabled').checked;
     return {
-        enabled: enabled,
-        width: parseInt(document.getElementById('scaleWidth').value) || 0,
-        height: parseInt(document.getElementById('scaleHeight').value) || 0,
+      enabled: enabled,
+      width: parseInt(document.getElementById('scaleWidth').value) || 0,
+      height: parseInt(document.getElementById('scaleHeight').value) || 0,
     };
-}
+  }
 
-function onScaleToggle() {
+  window.onScaleToggle = function () {
     const enabled = document.getElementById('scaleEnabled').checked;
     document.getElementById('scaleDimensions').style.display = enabled ? 'block' : 'none';
     debouncePreview();
-}
+  };
 
-function updateOriginalSizeLabel() {
+  function updateOriginalSizeLabel() {
     const select = document.getElementById('previewImageSelect');
     const filename = select?.value;
-    const img = images.find(i => i.filename === filename);
+    const img = AppState.images.find(i => i.filename === filename);
     const label = document.getElementById('originalSizeLabel');
     if (img && img.width && img.height) {
-        label.textContent = `${img.width} x ${img.height} px`;
-        // Reset scale dimensions to this image's original size
-        const enabled = document.getElementById('scaleEnabled').checked;
-        if (!enabled) {
-            document.getElementById('scaleWidth').value = img.width;
-            document.getElementById('scaleHeight').value = img.height;
-        }
+      label.textContent = `${img.width} x ${img.height} px`;
+      const enabled = document.getElementById('scaleEnabled').checked;
+      if (!enabled) {
+        document.getElementById('scaleWidth').value = img.width;
+        document.getElementById('scaleHeight').value = img.height;
+      }
     } else {
-        label.textContent = '—';
+      label.textContent = '—';
     }
-}
+  }
 
-function initScaleConfig() {
+  function initScaleConfig() {
     const sc = config?.scale || {};
     document.getElementById('scaleEnabled').checked = sc.enabled || false;
     if (sc.width) document.getElementById('scaleWidth').value = sc.width;
     if (sc.height) document.getElementById('scaleHeight').value = sc.height;
     onScaleToggle();
-}
+  }
 
-// --- Logos ---
-function renderLogos() {
+  // --- Logos ---
+  function renderLogos() {
     const container = document.getElementById('logosList');
     const logos = config?.logos || [];
     container.innerHTML = '';
-
     logos.forEach((logo, idx) => {
-        const div = document.createElement('div');
-        div.className = 'logo-item';
-        div.innerHTML = [
-            '<div class="logo-header">',
-            `<span class="logo-name">Logo ${idx + 1}: ${esc(logo.filename || '—')}</span>`,
-            `<button class="btn-danger btn-xs" onclick="removeLogo(${idx})">✕</button>`,
-            '</div>',
-            `<div class="te-row"><label>File</label><span style="font-size:0.8rem;">${esc(logo.filename || '')}</span></div>`,
-            `<div class="te-row"><label>Width</label><input type="number" value="${logo.width || 200}" min="10" onchange="updateLogo(${idx},'width',this.value)"></div>`,
-            `<div class="te-row"><label>Height</label><input type="number" value="${logo.height || 60}" min="10" onchange="updateLogo(${idx},'height',this.value)"></div>`,
-            `<div class="te-row"><label>offset_x</label><input type="number" value="${logo.offset_x || 0}" onchange="updateLogo(${idx},'offset_x',this.value)"></div>`,
-            `<div class="te-row"><label>offset_y</label><input type="number" value="${logo.offset_y || 0}" onchange="updateLogo(${idx},'offset_y',this.value)"></div>`,
-        ].join('');
-        container.appendChild(div);
+      const div = document.createElement('div');
+      div.className = 'logo-item';
+      div.innerHTML = [
+        '<div class="logo-header">',
+        `<span class="logo-name">Logo ${idx + 1}: ${esc(logo.filename || '—')}</span>`,
+        `<button class="btn-danger btn-xs" onclick="removeLogo(${idx})">✕</button>`,
+        '</div>',
+        `<div class="te-row"><label>File</label><span style="font-size:0.8rem;">${esc(logo.filename || '')}</span></div>`,
+        `<div class="te-row"><label>Width</label><input type="number" value="${logo.width || 200}" min="10" onchange="updateLogo(${idx},'width',this.value)"></div>`,
+        `<div class="te-row"><label>Height</label><input type="number" value="${logo.height || 60}" min="10" onchange="updateLogo(${idx},'height',this.value)"></div>`,
+        `<div class="te-row"><label>offset_x</label><input type="number" value="${logo.offset_x || 0}" onchange="updateLogo(${idx},'offset_x',this.value)"></div>`,
+        `<div class="te-row"><label>offset_y</label><input type="number" value="${logo.offset_y || 0}" onchange="updateLogo(${idx},'offset_y',this.value)"></div>`,
+      ].join('');
+      container.appendChild(div);
     });
-}
+  }
 
-function addLogo() {
+  window.addLogo = function () {
     const input = document.getElementById('logoFileInput');
     input.click();
     input.onchange = async () => {
-        if (!input.files.length) return;
-        const formData = new FormData();
-        formData.append('file', input.files[0]);
-        try {
-            const resp = await fetch('/api/logos', { method: 'POST', body: formData });
-            const data = await resp.json();
-            if (data.error) { alert(data.error); return; }
-            if (!config.logos) config.logos = [];
-            config.logos.push({
-                filename: data.filename, path: data.path,
-                width: data.width, height: data.height,
-                offset_x: 0, offset_y: 0
-            });
-            await saveConfig();
-            renderLogos();
-            debouncePreview();
-        } catch (err) {
-            alert('Logo upload failed: ' + err.message);
-        }
-        input.value = '';
+      if (!input.files.length) return;
+      try {
+        const logoData = await AppState.addLogo(input.files[0]);
+        if (!logoData) { alert('Failed to load logo'); return; }
+        if (!config.logos) config.logos = [];
+        config.logos.push(logoData);
+        AppState.saveConfig(config);
+        renderLogos();
+        debouncePreview();
+      } catch (err) {
+        alert('Logo upload failed: ' + err.message);
+      }
+      input.value = '';
     };
-}
+  };
 
-function updateLogo(idx, field, value) {
+  window.updateLogo = function (idx, field, value) {
     config.logos[idx][field] = parseInt(value) || 0;
-    saveConfig();
+    AppState.saveConfig(config);
     debouncePreview();
-}
+  };
 
-function removeLogo(idx) {
+  window.removeLogo = function (idx) {
     config.logos.splice(idx, 1);
-    saveConfig();
+    AppState.saveConfig(config);
     renderLogos();
     debouncePreview();
-}
+  };
 
-// --- Text Lines ---
-function renderTextLines() {
+  // --- Text Lines ---
+  function renderTextLines() {
     const container = document.getElementById('textLinesList');
     const lines = config?.text_lines || [];
     container.innerHTML = '';
-
     lines.forEach((line, idx) => {
-        const div = document.createElement('div');
-        div.className = 'text-line';
-        div.draggable = true;
-        div.dataset.idx = idx;
-
-        div.innerHTML = [
-            '<div class="tl-header">',
-            `<span class="tl-name">Line ${idx + 1}</span>`,
-            `<button class="btn-danger btn-xs" onclick="event.stopPropagation(); removeTextLine(${idx})">✕</button>`,
-            '</div>',
-            '<div class="tl-parts">',
-            _renderPart(idx, 'left', line.left),
-            _renderPart(idx, 'center', line.center),
-            _renderPart(idx, 'right', line.right),
-            '</div>',
-            '<div class="tl-tag-hint">',
-            '<span style="font-size:0.72rem; color:#888;">Insert tag into </span>',
-            `<select id="tl_part_sel_${idx}" style="font-size:0.72rem; padding:1px 2px; border:1px solid #ddd; border-radius:3px;">`,
-            '<option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>',
-            '</select>',
-            '<span style="font-size:0.72rem; color:#888;">: </span>',
-            COMMON_EXIF_TAGS.slice(0, 8).map(t =>
-                `<span onclick="insertTag(${idx},document.getElementById('tl_part_sel_${idx}').value,'${esc(t)}')" title="Insert tag">${esc(t)}</span>`
-            ).join(' · '),
-            '</div>',
-        ].join('');
-
-        // Drag events
-        div.addEventListener('dragstart', onDragStart);
-        div.addEventListener('dragover', onDragOver);
-        div.addEventListener('drop', onDrop);
-        div.addEventListener('dragend', onDragEnd);
-
-        container.appendChild(div);
+      const div = document.createElement('div');
+      div.className = 'text-line';
+      div.draggable = true;
+      div.dataset.idx = idx;
+      div.innerHTML = [
+        '<div class="tl-header">',
+        `<span class="tl-name">Line ${idx + 1}</span>`,
+        `<button class="btn-danger btn-xs" onclick="event.stopPropagation(); removeTextLine(${idx})">✕</button>`,
+        '</div>',
+        '<div class="tl-parts">',
+        _renderPart(idx, 'left', line.left),
+        _renderPart(idx, 'center', line.center),
+        _renderPart(idx, 'right', line.right),
+        '</div>',
+        '<div class="tl-tag-hint">',
+        '<span style="font-size:0.72rem; color:#888;">Insert tag into </span>',
+        `<select id="tl_part_sel_${idx}" style="font-size:0.72rem; padding:1px 2px; border:1px solid #ddd; border-radius:3px;">`,
+        '<option value="left">Left</option><option value="center">Center</option><option value="right">Right</option>',
+        '</select>',
+        '<span style="font-size:0.72rem; color:#888;">: </span>',
+        COMMON_EXIF_TAGS.slice(0, 8).map(t =>
+          `<span onclick="insertTag(${idx},document.getElementById('tl_part_sel_${idx}').value,'${esc(t)}')" title="Insert tag">${esc(t)}</span>`
+        ).join(' · '),
+        '</div>',
+      ].join('');
+      div.addEventListener('dragstart', onDragStart);
+      div.addEventListener('dragover', onDragOver);
+      div.addEventListener('drop', onDrop);
+      div.addEventListener('dragend', onDragEnd);
+      container.appendChild(div);
     });
-}
+  }
 
-function _renderPart(idx, name, part) {
+  function _renderPart(idx, name, part) {
     const p = (part && typeof part === 'object') ? part : { text: part || '' };
     const text = esc(p.text || '');
     const family = p.font_family || 'Roboto';
@@ -335,82 +232,74 @@ function _renderPart(idx, name, part) {
     const color = p.font_color || '#333333';
 
     const familyOpts = FONT_FAMILIES.map(f =>
-        `<option value="${f}" ${family === f ? 'selected' : ''}>${f}</option>`
+      `<option value="${f}" ${family === f ? 'selected' : ''}>${f}</option>`
     ).join('');
     const weightOpts = FONT_WEIGHTS.map(w =>
-        `<option value="${w}" ${weight === w ? 'selected' : ''}>${w}</option>`
+      `<option value="${w}" ${weight === w ? 'selected' : ''}>${w}</option>`
     ).join('');
     const styleOpts = FONT_STYLES.map(s =>
-        `<option value="${s}" ${style === s ? 'selected' : ''}>${s}</option>`
+      `<option value="${s}" ${style === s ? 'selected' : ''}>${s}</option>`
     ).join('');
 
     const capName = name.charAt(0).toUpperCase() + name.slice(1);
     return [
-        `<div class="tl-part">`,
-        `<label>${capName}</label>`,
-        `<input type="text" value="${text}" onchange="updatePartText(${idx},'${name}',this.value)" id="tl_${name}_${idx}">`,
-        `<div class="tl-part-font">`,
-        `<select onchange="updatePartFont(${idx},'${name}','font_family',this.value)">${familyOpts}</select>`,
-        `<select onchange="updatePartFont(${idx},'${name}','font_weight',this.value)">${weightOpts}</select>`,
-        `<select onchange="updatePartFont(${idx},'${name}','font_style',this.value)">${styleOpts}</select>`,
-        `<input type="number" value="${size}" min="8" max="200" onchange="updatePartFont(${idx},'${name}','font_size',this.value)">`,
-        `<input type="color" value="${color}" onchange="updatePartFont(${idx},'${name}','font_color',this.value)">`,
-        `</div>`,
-        `</div>`,
+      `<div class="tl-part">`,
+      `<label>${capName}</label>`,
+      `<input type="text" value="${text}" onchange="updatePartText(${idx},'${name}',this.value)" id="tl_${name}_${idx}">`,
+      `<div class="tl-part-font">`,
+      `<select onchange="updatePartFont(${idx},'${name}','font_family',this.value)">${familyOpts}</select>`,
+      `<select onchange="updatePartFont(${idx},'${name}','font_weight',this.value)">${weightOpts}</select>`,
+      `<select onchange="updatePartFont(${idx},'${name}','font_style',this.value)">${styleOpts}</select>`,
+      `<input type="number" value="${size}" min="8" max="200" onchange="updatePartFont(${idx},'${name}','font_size',this.value)">`,
+      `<input type="color" value="${color}" onchange="updatePartFont(${idx},'${name}','font_color',this.value)">`,
+      `</div>`,
+      `</div>`,
     ].join('');
-}
+  }
 
-function addTextLine() {
+  window.addTextLine = function () {
     if (!config.text_lines) config.text_lines = [];
-    const defaultPart = {
-        text: '',
-        font_family: 'Roboto',
-        font_size: 20,
-        font_color: '#777777',
-        font_weight: 'normal',
-        font_style: 'normal',
-    };
+    const defaultPart = { text: '', font_family: 'Roboto', font_size: 20, font_color: '#777777', font_weight: 'normal', font_style: 'normal' };
     config.text_lines.push({
-        left: { ...defaultPart },
-        center: { ...defaultPart },
-        right: { ...defaultPart },
+      left: { ...defaultPart },
+      center: { ...defaultPart },
+      right: { ...defaultPart },
     });
-    saveConfig();
+    AppState.saveConfig(config);
     renderTextLines();
     debouncePreview();
-}
+  };
 
-function removeTextLine(idx) {
+  window.removeTextLine = function (idx) {
     config.text_lines.splice(idx, 1);
-    saveConfig();
+    AppState.saveConfig(config);
     renderTextLines();
     debouncePreview();
-}
+  };
 
-function updatePartText(idx, part, value) {
+  window.updatePartText = function (idx, part, value) {
     if (typeof config.text_lines[idx][part] !== 'object') {
-        config.text_lines[idx][part] = { text: '' };
+      config.text_lines[idx][part] = { text: '' };
     }
     config.text_lines[idx][part].text = value;
-    saveConfig();
+    AppState.saveConfig(config);
     debouncePreview();
-}
+  };
 
-function updatePartFont(idx, part, field, value) {
+  window.updatePartFont = function (idx, part, field, value) {
     const numFields = ['font_size'];
     if (typeof config.text_lines[idx][part] !== 'object') {
-        config.text_lines[idx][part] = { text: config.text_lines[idx][part] || '' };
+      config.text_lines[idx][part] = { text: config.text_lines[idx][part] || '' };
     }
     config.text_lines[idx][part][field] = numFields.includes(field) ? (parseInt(value) || 18) : value;
-    saveConfig();
+    AppState.saveConfig(config);
     debouncePreview();
-}
+  };
 
-function insertTag(idx, part, tagName) {
+  window.insertTag = function (idx, part, tagName) {
     const inputId = `tl_${part}_${idx}`;
     const input = document.getElementById(inputId);
     if (!input) return;
-
     const tagPlaceholder = '{' + tagName + '}';
     const cursorPos = input.selectionStart || input.value.length;
     const before = input.value.substring(0, cursorPos);
@@ -418,64 +307,56 @@ function insertTag(idx, part, tagName) {
     input.value = before + tagPlaceholder + after;
     input.focus();
     input.selectionStart = input.selectionEnd = cursorPos + tagPlaceholder.length;
-
     if (typeof config.text_lines[idx][part] !== 'object') {
-        config.text_lines[idx][part] = { text: '' };
+      config.text_lines[idx][part] = { text: '' };
     }
     config.text_lines[idx][part].text = input.value;
-    saveConfig();
+    AppState.saveConfig(config);
     debouncePreview();
-}
+  };
 
-// --- Drag & Drop for Text Lines ---
-let dragIdx = null;
-
-function onDragStart(e) {
+  // --- Drag & Drop for Text Lines ---
+  let dragIdx = null;
+  function onDragStart(e) {
     dragIdx = parseInt(e.target.closest('.text-line').dataset.idx);
     e.target.closest('.text-line').classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-}
-
-function onDragOver(e) {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-}
-
-function onDrop(e) {
+  }
+  function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+  function onDrop(e) {
     e.preventDefault();
     const target = e.target.closest('.text-line');
     if (!target || dragIdx === null) return;
     const dropIdx = parseInt(target.dataset.idx);
     if (dragIdx !== dropIdx) {
-        const moved = config.text_lines.splice(dragIdx, 1)[0];
-        config.text_lines.splice(dropIdx, 0, moved);
-        saveConfig();
-        renderTextLines();
-        debouncePreview();
+      const moved = config.text_lines.splice(dragIdx, 1)[0];
+      config.text_lines.splice(dropIdx, 0, moved);
+      AppState.saveConfig(config);
+      renderTextLines();
+      debouncePreview();
     }
     dragIdx = null;
-}
-
-function onDragEnd(e) {
+  }
+  function onDragEnd(e) {
     const el = e.target.closest('.text-line');
     if (el) el.classList.remove('dragging');
-}
+  }
 
-// --- Preview ---
-function populateImageSelector() {
+  // --- Preview ---
+  function populateImageSelector() {
     const select = document.getElementById('previewImageSelect');
+    const images = AppState.images;
     select.innerHTML = images.map((img, i) => {
-        const dims = (img.width && img.height) ? ` (${img.width}x${img.height})` : '';
-        return `<option value="${esc(img.filename)}" ${i === 0 ? 'selected' : ''}>${esc(img.filename)}${dims}</option>`;
+      const dims = (img.width && img.height) ? ` (${img.width}x${img.height})` : '';
+      return `<option value="${esc(img.filename)}" ${i === 0 ? 'selected' : ''}>${esc(img.filename)}${dims}</option>`;
     }).join('');
-    select.addEventListener('change', updateOriginalSizeLabel);
     if (images.length > 0) {
-        updateOriginalSizeLabel();
-        setTimeout(() => debouncePreview(), 200);
+      updateOriginalSizeLabel();
+      setTimeout(() => debouncePreview(), 300);
     }
-}
+  }
 
-function getCurrentBorderConfig() {
+  function getCurrentBorderConfig() {
     const mode = document.querySelector('input[name="borderMode"]:checked')?.value || 'custom';
     const top = parseInt(document.getElementById('borderTop').value);
     const bottom = parseInt(document.getElementById('borderBottom').value);
@@ -483,132 +364,115 @@ function getCurrentBorderConfig() {
     const right = parseInt(document.getElementById('borderRight').value);
 
     let a, b_val, c_val, auto_param, target_w, target_h;
-
     if (mode === 'target_ratio') {
-        a = parseInt(document.getElementById('targetA').value);
-        b_val = parseInt(document.getElementById('targetB').value);
-        c_val = parseInt(document.getElementById('targetC').value);
-        auto_param = document.getElementById('targetAutoParam').value;
-        target_w = parseInt(document.getElementById('targetW').value);
-        target_h = parseInt(document.getElementById('targetH').value);
+      a = parseInt(document.getElementById('targetA').value);
+      b_val = parseInt(document.getElementById('targetB').value);
+      c_val = parseInt(document.getElementById('targetC').value);
+      auto_param = document.getElementById('targetAutoParam').value;
+      target_w = parseInt(document.getElementById('targetW').value);
+      target_h = parseInt(document.getElementById('targetH').value);
     } else {
-        a = parseInt(document.getElementById('aspectA').value);
-        b_val = parseInt(document.getElementById('aspectB').value);
-        c_val = parseInt(document.getElementById('aspectC').value);
-        auto_param = document.getElementById('autoParam').value;
-        target_w = config?.border?.target_w || 16;
-        target_h = config?.border?.target_h || 9;
+      a = parseInt(document.getElementById('aspectA').value);
+      b_val = parseInt(document.getElementById('aspectB').value);
+      c_val = parseInt(document.getElementById('aspectC').value);
+      auto_param = document.getElementById('autoParam').value;
+      target_w = config?.border?.target_w || 16;
+      target_h = config?.border?.target_h || 9;
     }
 
     return {
-        mode: mode,
-        top: isNaN(top) ? 0 : top,
-        bottom: isNaN(bottom) ? 0 : bottom,
-        left: isNaN(left) ? 0 : left,
-        right: isNaN(right) ? 0 : right,
-        color: document.getElementById('borderColor').value,
-        auto_param: auto_param,
-        a: isNaN(a) ? 0 : a,
-        b: isNaN(b_val) ? 0 : b_val,
-        c: isNaN(c_val) ? 0 : c_val,
-        target_w: isNaN(target_w) ? 16 : target_w,
-        target_h: isNaN(target_h) ? 9 : target_h,
+      mode: mode,
+      top: isNaN(top) ? 0 : top,
+      bottom: isNaN(bottom) ? 0 : bottom,
+      left: isNaN(left) ? 0 : left,
+      right: isNaN(right) ? 0 : right,
+      color: document.getElementById('borderColor').value,
+      auto_param: auto_param,
+      a: isNaN(a) ? 0 : a,
+      b: isNaN(b_val) ? 0 : b_val,
+      c: isNaN(c_val) ? 0 : c_val,
+      target_w: isNaN(target_w) ? 16 : target_w,
+      target_h: isNaN(target_h) ? 9 : target_h,
     };
-}
+  }
 
-function getGlobalTextConfig() {
+  function getGlobalTextConfig() {
     return {
-        line_spacing: parseFloat(document.getElementById('lineSpacing').value) || 1.3,
-        text_margin_left: parseInt(document.getElementById('textMarginLeft').value) || 0,
-        text_margin_right: parseInt(document.getElementById('textMarginRight').value) || 0,
-        text_margin_bottom: parseInt(document.getElementById('textMarginBottom').value) || 0,
-        text_lines_spacing: parseInt(document.getElementById('linesGap').value) || 8,
+      line_spacing: parseFloat(document.getElementById('lineSpacing').value) || 1.3,
+      text_margin_left: parseInt(document.getElementById('textMarginLeft').value) || 0,
+      text_margin_right: parseInt(document.getElementById('textMarginRight').value) || 0,
+      text_margin_bottom: parseInt(document.getElementById('textMarginBottom').value) || 0,
+      text_lines_spacing: parseInt(document.getElementById('linesGap').value) || 8,
     };
-}
+  }
 
-function debouncePreview() {
+  window.debouncePreview = function () {
     if (previewTimer) clearTimeout(previewTimer);
     previewTimer = setTimeout(() => {
-        saveConfig();
-        generatePreview();
+      saveConfig();
+      generatePreview();
     }, 400);
-}
+  };
 
-async function generatePreview() {
+  async function generatePreview() {
     const select = document.getElementById('previewImageSelect');
     const filename = select?.value;
     if (!filename) return;
 
-    const payload = {
-        filename: filename,
-        border: getCurrentBorderConfig(),
-        logos: config?.logos || [],
-        text_lines: config?.text_lines || [],
-        global_text: getGlobalTextConfig(),
-        scale: getScaleConfig()
+    const imageData = AppState.images.find(i => i.filename === filename);
+    if (!imageData) return;
+
+    const mergedConfig = {
+      border: getCurrentBorderConfig(),
+      logos: config?.logos || [],
+      text_lines: config?.text_lines || [],
+      line_spacing: parseFloat(document.getElementById('lineSpacing').value) || 1.3,
+      text_margin_left: parseInt(document.getElementById('textMarginLeft').value) || 40,
+      text_margin_right: parseInt(document.getElementById('textMarginRight').value) || 40,
+      text_margin_bottom: parseInt(document.getElementById('textMarginBottom').value) || 30,
+      text_lines_spacing: parseInt(document.getElementById('linesGap').value) || 8,
+      scale: getScaleConfig(),
     };
 
     try {
-        const resp = await fetch('/api/preview', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const data = await resp.json();
-        if (data.error) {
-            console.error('Preview error:', data.error);
-            return;
-        }
-        const previewImg = document.getElementById('previewImage');
-        const placeholder = document.getElementById('previewPlaceholder');
-        previewImg.src = data.preview_url + '?t=' + Date.now();
-        previewImg.style.display = 'block';
-        placeholder.style.display = 'none';
+      const canvas = await ImageRenderer.renderPreview(imageData, mergedConfig, 900);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+      const url = URL.createObjectURL(blob);
+
+      const previewImg = document.getElementById('previewImage');
+      const placeholder = document.getElementById('previewPlaceholder');
+      previewImg.src = url;
+      previewImg.style.display = 'block';
+      placeholder.style.display = 'none';
+
+      if (prevPreviewUrl) URL.revokeObjectURL(prevPreviewUrl);
+      prevPreviewUrl = url;
     } catch (err) {
-        console.error('Preview failed:', err);
+      console.error('Preview failed:', err);
     }
-}
+  }
 
-// --- Helpers ---
-function _intVal(id, fallback) {
-    const v = parseInt(document.getElementById(id).value);
-    return isNaN(v) ? fallback : v;
-}
-function _floatVal(id, fallback) {
-    const v = parseFloat(document.getElementById(id).value);
-    return isNaN(v) ? fallback : v;
-}
+  // --- Save config ---
+  function saveConfig() {
+    if (!config.border) config.border = {};
+    Object.assign(config.border, getCurrentBorderConfig());
+    config.line_spacing = parseFloat(document.getElementById('lineSpacing').value) || 1.3;
+    config.text_margin_left = parseInt(document.getElementById('textMarginLeft').value) || 40;
+    config.text_margin_right = parseInt(document.getElementById('textMarginRight').value) || 40;
+    config.text_margin_bottom = parseInt(document.getElementById('textMarginBottom').value) || 30;
+    config.text_lines_spacing = parseInt(document.getElementById('linesGap').value) || 8;
+    if (!config.scale) config.scale = {};
+    Object.assign(config.scale, getScaleConfig());
+    AppState.saveConfig(config);
+  }
 
-// --- Navigation ---
-async function saveConfig() {
-    try {
-        if (!config.border) config.border = {};
-        Object.assign(config.border, getCurrentBorderConfig());
-        config.line_spacing = _floatVal('lineSpacing', 1.3);
-        config.text_margin_left = _intVal('textMarginLeft', 40);
-        config.text_margin_right = _intVal('textMarginRight', 40);
-        config.text_margin_bottom = _intVal('textMarginBottom', 30);
-        config.text_lines_spacing = _intVal('linesGap', 8);
-        if (!config.scale) config.scale = {};
-        Object.assign(config.scale, getScaleConfig());
+  window.goToStep3 = function () {
+    saveConfig();
+    AppState.navigate(3);
+  };
 
-        await fetch('/api/config', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
-        });
-    } catch (e) {
-        console.error('Failed to save config', e);
-    }
-}
-
-function goToStep3() {
-    saveConfig().then(() => {
-        window.location.href = '/step3';
-    });
-}
-
-function esc(s) {
+  function esc(s) {
     if (s === null || s === undefined) return '';
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+  }
+})();

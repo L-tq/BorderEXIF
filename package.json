@@ -1,0 +1,12 @@
+{
+  "name": "exifborder",
+  "version": "2.0.0",
+  "description": "ExifBorder – Client-side image framing tool",
+  "scripts": {
+    "dev": "serve .",
+    "start": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}

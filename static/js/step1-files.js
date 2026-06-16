@@ -1,146 +1,103 @@
-/* Step 1: File selection and EXIF summary */
+/* Step 1: File selection and EXIF summary — client-side only */
 
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const tableWrapper = document.getElementById('tableWrapper');
-const tableBody = document.getElementById('imagesTableBody');
-const imageCount = document.getElementById('imageCount');
-const exifDetail = document.getElementById('exifDetail');
-const exifDetailName = document.getElementById('exifDetailName');
-const exifDetailContent = document.getElementById('exifDetailContent');
-const btnNext = document.getElementById('btnNext');
+(function () {
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const tableWrapper = document.getElementById('tableWrapper');
+  const tableBody = document.getElementById('imagesTableBody');
+  const imageCount = document.getElementById('imageCount');
+  const exifDetail = document.getElementById('exifDetail');
+  const exifDetailName = document.getElementById('exifDetailName');
+  const exifDetailContent = document.getElementById('exifDetailContent');
+  const btnNext = document.getElementById('btnNext');
 
-let uploadedImages = [];
-
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        const resp = await fetch('/api/images');
-        const data = await resp.json();
-        uploadedImages = data.images || [];
-        renderTable();
-    } catch (e) {
-        console.error('Failed to load existing images', e);
-    }
-});
-
-// Drop zone click
-dropZone.addEventListener('click', () => fileInput.click());
-
-// Drag & drop
-dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-});
-dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('dragover');
-});
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    if (e.dataTransfer.files.length > 0) {
-        uploadFiles(e.dataTransfer.files);
-    }
-});
-
-// File input change
-fileInput.addEventListener('change', () => {
-    if (fileInput.files.length > 0) {
-        uploadFiles(fileInput.files);
-    }
-});
-
-async function uploadFiles(fileList) {
-    const formData = new FormData();
-    for (const f of fileList) {
-        formData.append('files', f);
-    }
-
-    dropZone.textContent = 'Uploading...';
-
-    try {
-        const resp = await fetch('/api/images', { method: 'POST', body: formData });
-        const data = await resp.json();
-        if (data.images) {
-            uploadedImages = data.images;
-            renderTable();
-        }
-    } catch (err) {
-        alert('Upload failed: ' + err.message);
-    } finally {
-        dropZone.innerHTML = '<h2>Drop images here</h2><p>or click to browse — JPEG, ARW supported</p>';
-    }
-}
-
-function renderTable() {
+  function renderTable() {
     tableBody.innerHTML = '';
-    if (uploadedImages.length === 0) {
-        tableWrapper.style.display = 'none';
-        btnNext.disabled = true;
-        return;
+    const images = AppState.images;
+    if (images.length === 0) {
+      tableWrapper.style.display = 'none';
+      btnNext.disabled = true;
+      return;
     }
-
     tableWrapper.style.display = 'block';
     btnNext.disabled = false;
-    imageCount.textContent = uploadedImages.length + ' image(s) loaded';
+    imageCount.textContent = images.length + ' image(s) loaded';
 
-    for (const img of uploadedImages) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = [
-            `<td><strong>${esc(img.filename)}</strong></td>`,
-            `<td>${img.width}×${img.height}</td>`,
-            `<td>${esc(img.camera_model || '—')}</td>`,
-            `<td>${esc(img.lens_model || '—')}</td>`,
-            `<td>${esc(img.focal_length || '—')}</td>`,
-            `<td>${esc(img.aperture || '—')}</td>`,
-            `<td>${esc(img.iso || '—')}</td>`,
-            `<td>${esc(img.exposure_time || '—')}</td>`,
-            `<td>
-                <button class="btn-danger" onclick="deleteImage('${esc(img.filename)}')">✕</button>
-                <button class="btn btn-sm btn-secondary" style="margin-left:4px;" onclick="showExif('${esc(img.filename)}')">EXIF</button>
-            </td>`,
-        ].join('');
-        tableBody.appendChild(tr);
+    for (const img of images) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = [
+        `<td><strong>${esc(img.filename)}</strong></td>`,
+        `<td>${img.width}×${img.height}</td>`,
+        `<td>${esc(img.exif.camera_model || '—')}</td>`,
+        `<td>${esc(img.exif.lens_model || '—')}</td>`,
+        `<td>${esc(img.exif.focal_length || '—')}</td>`,
+        `<td>${esc(img.exif.aperture || '—')}</td>`,
+        `<td>${esc(img.exif.iso || '—')}</td>`,
+        `<td>${esc(img.exif.exposure_time || '—')}</td>`,
+        `<td>
+            <button class="btn-danger" onclick="deleteImage('${esc(img.filename)}')">✕</button>
+            <button class="btn btn-sm btn-secondary" style="margin-left:4px;" onclick="showExif('${esc(img.filename)}')">EXIF</button>
+        </td>`,
+      ].join('');
+      tableBody.appendChild(tr);
     }
-}
+  }
 
-async function deleteImage(filename) {
+  // Drop zone
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('dragover'); });
+  dropZone.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) await uploadFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', async () => {
+    if (fileInput.files.length > 0) await uploadFiles(fileInput.files);
+  });
+
+  async function uploadFiles(fileList) {
+    dropZone.textContent = 'Reading files & EXIF data...';
     try {
-        await fetch(`/api/images/${encodeURIComponent(filename)}`, { method: 'DELETE' });
-        uploadedImages = uploadedImages.filter(i => i.filename !== filename);
-        renderTable();
+      await AppState.addImages(fileList);
+      renderTable();
     } catch (err) {
-        alert('Failed to delete: ' + err.message);
+      alert('Failed to read files: ' + err.message);
+    } finally {
+      dropZone.innerHTML = '<h2>Drop images here</h2><p>or click to browse — JPEG only</p>';
     }
-}
+  }
 
-async function showExif(filename) {
-    try {
-        const resp = await fetch(`/api/images/${encodeURIComponent(filename)}/exif`);
-        const data = await resp.json();
-        exifDetailName.textContent = filename;
-        exifDetailContent.innerHTML = renderExifTable(data.all_tags || {});
-        exifDetail.style.display = 'block';
-    } catch (err) {
-        alert('Failed to load EXIF: ' + err.message);
-    }
-}
+  window.showExif = function (filename) {
+    const img = AppState.images.find(i => i.filename === filename);
+    if (!img) return;
+    exifDetailName.textContent = filename;
+    exifDetailContent.innerHTML = renderExifTable(img.exif.all_tags || {});
+    exifDetail.style.display = 'block';
+  };
 
-function renderExifTable(tags) {
+  function renderExifTable(tags) {
     const rows = Object.entries(tags).map(([k, v]) =>
-        `<tr><td>${esc(String(k))}</td><td>${esc(String(v))}</td></tr>`
+      `<tr><td>${esc(String(k))}</td><td>${esc(String(v))}</td></tr>`
     ).join('');
     return `<table>${rows}</table>`;
-}
+  }
 
-function clearAll() {
-    for (const img of uploadedImages) {
-        fetch(`/api/images/${encodeURIComponent(img.filename)}`, { method: 'DELETE' }).catch(()=>{});
-    }
-    uploadedImages = [];
+  window.deleteImage = function (filename) {
+    AppState.removeImage(filename);
     renderTable();
-}
+  };
 
-function esc(s) {
+  window.clearAll = function () {
+    AppState.clearAll();
+    renderTable();
+  };
+
+  function esc(s) {
     if (s === null || s === undefined) return '';
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+  }
+
+  // Expose renderTable globally for AppState navigation
+  window.renderStep1Table = renderTable;
+})();
