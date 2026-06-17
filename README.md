@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-Opens at `http://localhost:3000`. Drop images, configure borders and text, download rendered results.
+Opens at `http://localhost:3000`. The landing page introduces the tool; click **Open App** or **Upload & Frame** to enter the 3-step wizard.
 
 ## How it works
 
@@ -18,9 +18,19 @@ Everything runs in the browser via the Canvas API:
 - **EXIF reading** — [exifr](https://github.com/MikeKovarik/exifr) parses metadata from JPEG files
 - **Rendering** — Canvas 2D API handles borders, text overlays, logo placement, and EXIF orientation correction
 - **ZIP export** — [JSZip](https://stuk.github.io/jszip/) bundles rendered images client-side
+- **Animations** — [GSAP](https://gsap.com) + ScrollTrigger for scroll-driven effects, 3D tilt, and micro-interactions
 - **Persistence** — config and theme saved to `localStorage`
 
 RAW image formats (ARW, etc.) are not supported — browsers have no native RAW decoder.
+
+## Pages
+
+| Route | File | Description |
+|---|---|---|
+| `/` | `index.html` | Landing page with animated hero, trust stats, workflow cards, and CTA |
+| `/app` | `app.html` | 3-step wizard: select files → configure borders & text → review & download |
+
+The landing page and app share the same theme system (`exifborder-theme` key in `localStorage`).
 
 ## Deploy
 
@@ -32,30 +42,33 @@ Static files only. Deploy to any static host (Vercel, Netlify, GitHub Pages, etc
 vercel
 ```
 
-The included `vercel.json` handles SPA fallback routing.
+The included `vercel.json` routes `/` → `index.html` and `/app` → `app.html`.
 
 ## Directory layout
 
 ```
 exifborder/
-├── index.html               # Single-page app (hash-based routing)
-├── vercel.json              # Vercel static deploy config
+├── index.html                # Landing page
+├── app.html                  # 3-step image framing app
+├── vercel.json               # Vercel static deploy config
 ├── package.json
 ├── static/
 │   ├── css/
-│   │   └── style.css        # Theme variables + component styles
+│   │   ├── landing.css       # Landing page styles (theme tokens, hero, cards, cursor)
+│   │   └── style.css         # App styles (theme variables, form controls, tables)
 │   ├── js/
-│   │   ├── app-state.js     # Central state, navigation, localStorage
-│   │   ├── border.js        # Border dimension math
-│   │   ├── exif-reader.js   # EXIF parsing wrapper
+│   │   ├── landing.js        # GSAP animations, particles, cursor, 3D tilt, shockwave
+│   │   ├── app-state.js      # Central state, navigation, localStorage
+│   │   ├── border.js         # Border dimension math
+│   │   ├── exif-reader.js    # EXIF parsing wrapper
 │   │   ├── image-renderer.js # Canvas rendering pipeline
-│   │   ├── step1-files.js   # File upload & EXIF display
-│   │   ├── step2-layout.js  # Border/text/logo configuration
-│   │   └── step3-review.js  # Batch render & download
+│   │   ├── step1-files.js    # File upload & EXIF display
+│   │   ├── step2-layout.js   # Border/text/logo configuration
+│   │   └── step3-review.js   # Batch render & download
 │   └── logos/
 │       └── Sony_Alpha_logo.svg
 ```
 
 ## Theme
 
-Light and dark themes included. Toggle via the ☀️/🌙 button in the header. Theme persists across reloads and respects `prefers-color-scheme` on first visit.
+Light and dark themes included. Toggle via the ☀️/🌙 button in the header. Theme persists across reloads, navigates between landing and app, and respects `prefers-color-scheme` on first visit.

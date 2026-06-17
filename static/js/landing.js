@@ -338,35 +338,42 @@
        Trust & Stats — count-up
        ============================================================ */
     function initStats() {
+        var style = getComputedStyle(document.documentElement);
+        var glowColor = style.getPropertyValue('--lp-glow-cyan-strong').trim();
+
         statNumbers.forEach(function(el) {
             var target = el.getAttribute('data-target');
             if (!target) return;
             var isPercent = target.indexOf('%') !== -1;
             var numVal = parseFloat(target);
             var counter = { val: 0 };
+            var card = el.closest('.stat-card');
+
             ScrollTrigger.create({
                 trigger: el,
                 start: 'top 85%',
                 onEnter: function() {
+                    /* Counter tween */
                     gsap.to(counter, {
                         val: numVal,
                         duration: 2,
                         ease: 'power2.out',
                         onUpdate: function() {
                             el.textContent = isPercent ? Math.round(counter.val) + '%' : Math.round(counter.val).toLocaleString();
-                        },
-                        onComplete: function() {
-                            /* Glow on completion */
-                            var card = el.closest('.stat-card');
-                            if (card) {
-                                card.classList.add('glowing');
-                                gsap.to(card, {
-                                    boxShadow: 'var(--lp-card-hover-shadow), 0 0 50px var(--lp-glow-cyan-strong)',
-                                    duration: 0.6
-                                });
-                            }
                         }
                     });
+                    /* Glow fades in smoothly over the count-up duration */
+                    if (card) {
+                        gsap.fromTo(card,
+                            { boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04), 0 0 0px ' + glowColor },
+                            {
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.08), 0 0 50px ' + glowColor,
+                                duration: 2,
+                                ease: 'power2.out',
+                                onComplete: function() { card.classList.add('glowing'); }
+                            }
+                        );
+                    }
                 },
                 once: true
             });
@@ -392,6 +399,58 @@
             },
             once: true
         });
+    }
+
+    /* ============================================================
+       Trust Cards — 3D tilt on hover
+       ============================================================ */
+    function initTrustCards() {
+        var tiltTargets = document.querySelectorAll('.stat-card, .oss-badge');
+        tiltTargets.forEach(function(card) {
+            card.addEventListener('mousemove', function(e) {
+                var rect = card.getBoundingClientRect();
+                var cx = e.clientX - rect.left;
+                var cy = e.clientY - rect.top;
+                var rx = (cy / rect.height - 0.5) * -12;
+                var ry = (cx / rect.width - 0.5) * 12;
+                gsap.to(card, {
+                    rotateX: rx,
+                    rotateY: ry,
+                    duration: 0.4,
+                    ease: 'power2.out'
+                });
+            });
+            card.addEventListener('mouseleave', function() {
+                gsap.to(card, {
+                    rotateX: 0,
+                    rotateY: 0,
+                    duration: 0.6,
+                    ease: 'elastic.out(1, 0.4)'
+                });
+            });
+        });
+
+        /* Soft shockwave ring on OSS badge */
+        if (ossBadge) {
+            var ring = ossBadge.querySelector('.oss-shockwave-ring');
+            if (ring) {
+                ossBadge.addEventListener('mouseenter', function() {
+                    var tl = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
+                    tl.fromTo(ring,
+                        { opacity: 0.5, scale: 1 },
+                        { opacity: 0, scale: 1.08, duration: 1, ease: 'power2.out' }
+                    );
+                    ossBadge._shockwaveTl = tl;
+                });
+                ossBadge.addEventListener('mouseleave', function() {
+                    if (ossBadge._shockwaveTl) {
+                        ossBadge._shockwaveTl.kill();
+                        ossBadge._shockwaveTl = null;
+                    }
+                    gsap.to(ring, { opacity: 0, scale: 1, duration: 0.3 });
+                });
+            }
+        }
     }
 
     /* ============================================================
@@ -703,6 +762,7 @@
         initMagneticButton();
         initStats();
         initGitHubIcon();
+        initTrustCards();
         initWorkflowCards();
         initScrambleText();
         initShockwave();

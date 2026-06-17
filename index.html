@@ -6,6 +6,13 @@
     <title>ExifBorder — Client-Side Image Framing</title>
     <meta name="description" content="Frame your photos with EXIF metadata overlays. 100% client-side — images never leave your browser.">
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/public/favicon/favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="/public/favicon/favicon-96x96.png">
+    <link rel="icon" type="image/x-icon" href="/public/favicon/favicon.ico">
+    <link rel="apple-touch-icon" href="/public/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="/public/favicon/site.webmanifest">
+
     <!-- Fonts: Inter (UI), Space Grotesk (headings), JetBrains Mono (EXIF/code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -181,7 +188,9 @@
                     </div>
                 </div>
 
+                <div class="oss-badge-wrap">
                 <a href="https://github.com/L-tq/BorderEXIF" target="_blank" rel="noopener" class="oss-badge" id="ossBadge">
+                    <span class="oss-shockwave-ring"></span>
                     <div class="github-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path class="gh-outline" d="M15 22v-4a4.8 4.8 0 00-1-3.5c3 0 6-2 6-5.5a4.3 4.3 0 00-.8-2.5 4 4 0 00-.1-2.8s-1-.3-3.3 1.2a11.5 11.5 0 00-6 0C7.2 3.7 6.2 4 6.2 4a4 4 0 00-.1 2.8 4.3 4.3 0 00-.8 2.5c0 3.5 3 5.5 6 5.5a4.8 4.8 0 00-1 3.5v4"/>
@@ -193,6 +202,7 @@
                         <div class="oss-sub">Every line of code is inspectable on GitHub</div>
                     </div>
                 </a>
+                </div>
             </div>
         </section>
 
@@ -223,7 +233,18 @@
                         <span class="wc-icon">🎨</span>
                         <h3>Configure</h3>
                         <p>Set border dimensions, choose colors, add text lines with EXIF placeholders, and position logos. Live preview updates instantly.</p>
-                        <div class="wc-frame-preview"></div>
+                        <div class="wc-frame-preview">
+                            <div class="wc-mini-photo"></div>
+                            <div class="wc-mini-border-top"></div>
+                            <div class="wc-mini-border-bottom"></div>
+                            <div class="wc-mini-border-left"></div>
+                            <div class="wc-mini-border-right"></div>
+                            <div class="wc-mini-texts">
+                                <span class="wc-mini-txt"></span>
+                                <span class="wc-mini-txt wc-mini-txt-mid"></span>
+                                <span class="wc-mini-txt wc-mini-txt-short"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Card 3: Batch Render -->

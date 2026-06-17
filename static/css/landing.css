@@ -548,6 +548,7 @@ body {
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 48px;
+    perspective: 800px;
 }
 .stat-card {
     background: var(--lp-surface-glass);
@@ -561,7 +562,8 @@ body {
     flex: 1;
     max-width: 280px;
     box-shadow: var(--lp-card-shadow);
-    transition: box-shadow 0.4s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
 }
 .stat-card.glowing {
     box-shadow: var(--lp-card-hover-shadow), 0 0 40px var(--lp-glow-cyan);
@@ -579,6 +581,10 @@ body {
     color: var(--lp-text-muted);
     font-weight: 500;
 }
+.oss-badge-wrap {
+    perspective: 800px;
+    margin-bottom: 0;
+}
 .oss-badge {
     display: flex;
     align-items: center;
@@ -594,11 +600,20 @@ body {
     text-decoration: none;
     color: var(--lp-text);
     box-shadow: var(--lp-card-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: box-shadow 0.3s ease;
+    transform-style: preserve-3d;
+    will-change: transform;
 }
 .oss-badge:hover {
-    transform: translateY(-2px);
     box-shadow: var(--lp-card-hover-shadow);
+}
+.oss-shockwave-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 22px;
+    border: 1.5px solid var(--lp-accent);
+    opacity: 0;
+    pointer-events: none;
 }
 .oss-badge .github-icon {
     flex-shrink: 0;
@@ -722,17 +737,107 @@ body {
     stroke-dashoffset: 32;
 }
 .wc-frame-preview {
-    margin: 16px auto 0;
-    width: 120px;
-    height: 80px;
-    border: 3px solid var(--lp-border-strong);
-    border-radius: 4px;
-    background: var(--lp-surface);
-    transition: border-color 0.3s ease, border-width 0.3s ease;
+    margin: 20px auto 0;
+    width: 160px;
+    height: 110px;
+    position: relative;
 }
-.workflow-card:hover .wc-frame-preview {
-    border-color: var(--lp-accent);
-    border-width: 5px;
+.wc-mini-photo {
+    position: absolute;
+    inset: 12px 14px 28px 14px;
+    background: var(--lp-surface);
+    border-radius: 3px;
+    overflow: hidden;
+}
+/* Subtle photo gradient to suggest an image */
+.wc-mini-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+        var(--lp-glow-cyan) 0%,
+        transparent 45%,
+        transparent 55%,
+        var(--lp-glow-violet) 100%);
+    opacity: 0.5;
+    transition: opacity 0.4s ease;
+}
+.workflow-card:hover .wc-mini-photo::after {
+    opacity: 0.75;
+}
+/* Border segments — each side independently animated */
+.wc-mini-border-top,
+.wc-mini-border-bottom,
+.wc-mini-border-left,
+.wc-mini-border-right {
+    position: absolute;
+    background: var(--lp-border-strong);
+    border-radius: 2px;
+    transition: all 0.35s ease;
+}
+.wc-mini-border-top {
+    top: 0; left: 14px; right: 14px; height: 2px;
+}
+.wc-mini-border-bottom {
+    bottom: 26px; left: 14px; right: 14px; height: 2px;
+}
+.wc-mini-border-left {
+    left: 0; top: 12px; bottom: 28px; width: 2px;
+}
+.wc-mini-border-right {
+    right: 0; top: 12px; bottom: 28px; width: 2px;
+}
+/* Hover: borders thicken + colorize, each side a different amount */
+.workflow-card:hover .wc-mini-border-top {
+    height: 4px;
+    background: var(--lp-accent);
+    left: 4px; right: 4px;
+}
+.workflow-card:hover .wc-mini-border-bottom {
+    height: 5px;
+    background: var(--lp-accent);
+    left: 4px; right: 4px;
+}
+.workflow-card:hover .wc-mini-border-left {
+    width: 3px;
+    background: var(--lp-accent);
+    top: 4px; bottom: 24px;
+}
+.workflow-card:hover .wc-mini-border-right {
+    width: 3px;
+    background: var(--lp-accent);
+    top: 4px; bottom: 24px;
+}
+/* Text line placeholders */
+.wc-mini-texts {
+    position: absolute;
+    bottom: 6px;
+    left: 14px;
+    right: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+}
+.wc-mini-txt {
+    display: block;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--lp-border-strong);
+    width: 100%;
+    transition: all 0.35s ease;
+}
+.wc-mini-txt-mid { width: 72%; }
+.wc-mini-txt-short { width: 44%; }
+.workflow-card:hover .wc-mini-txt {
+    background: var(--lp-accent);
+    opacity: 0.8;
+}
+.workflow-card:hover .wc-mini-txt-mid {
+    width: 78%;
+}
+.workflow-card:hover .wc-mini-txt-short {
+    width: 52%;
 }
 .wc-thumbnails {
     display: flex;
