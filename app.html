@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExifBorder – Image Framing Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/style.css">
+    <script>
+        // Set theme before page render to avoid flash
+        (function() {
+            var saved = localStorage.getItem('exifborder-theme');
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+            } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <!-- CDN Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <style>
+        /* Step visibility */
+        .step-content { display: none; }
+
+        /* Step 1 */
+        .drop-zone { border: 2px dashed var(--drop-zone-border); border-radius: 12px; padding: 60px 20px;
+            text-align: center; transition: all 0.2s; cursor: pointer; background: var(--drop-zone-bg); }
+        .drop-zone.dragover { border-color: var(--primary); background: var(--drop-zone-hover-bg); }
+        .drop-zone h2 { margin: 0 0 8px; font-size: 1.4rem; color: var(--text); }
+        .drop-zone p { margin: 0; color: var(--text-muted); }
+        .images-table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 0.9rem; }
+        .images-table th { background: var(--bg-alt); padding: 10px 12px; text-align: left; font-weight: 600;
+            border-bottom: 2px solid var(--border); white-space: nowrap; }
+        .images-table td { padding: 8px 12px; border-bottom: 1px solid var(--border-light); }
+        .images-table tr:hover td { background: var(--surface-hover); }
+        .exif-summary { margin-top: 24px; }
+        .exif-summary h3 { margin-bottom: 12px; }
+        .exif-detail { background: var(--surface-raised); border: 1px solid var(--border-light); border-radius: 8px;
+            padding: 16px; margin-top: 12px; max-height: 400px; overflow-y: auto; }
+        .exif-detail table { width: 100%; font-size: 0.85rem; }
+        .exif-detail td { padding: 3px 8px; }
+        .exif-detail td:first-child { font-weight: 500; color: var(--text-secondary); width: 40%; }
+        .image-count { color: var(--text-muted); font-size: 0.9rem; }
+
+        /* Step 2 */
+        .layout-grid { display: flex; flex-direction: column; gap: 24px; }
+        .controls-column { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .controls-column .panel { margin-bottom: 0; }
+        .form-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .form-row label { font-size: 0.85rem; min-width: 70px; color: var(--text-secondary); }
+        .form-row input, .form-row select { padding: 6px 10px; border: 1px solid var(--input-border); border-radius: 4px; font-size: 0.85rem; background: var(--input-bg); color: var(--text); }
+        .form-row input[type="number"] { width: 70px; }
+        .form-row input[type="color"] { width: 40px; height: 32px; padding: 2px; cursor: pointer; }
+        .radio-group { display: flex; gap: 16px; margin-bottom: 8px; font-size: 0.9rem; }
+        .radio-group label { cursor: pointer; }
+
+        .preview-container { text-align: center; }
+        .preview-container img { max-width: 100%; max-height: 65vh; border: 1px solid var(--border); border-radius: 4px; }
+        .preview-placeholder { border: 1px solid var(--border); border-radius: 8px; padding: 80px 40px;
+            background: var(--drop-zone-bg); color: var(--text-placeholder); }
+
+        .text-line { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 6px;
+            padding: 10px 12px; margin-bottom: 6px; cursor: grab; }
+        .text-line.dragging { opacity: 0.5; }
+        .text-line .tl-header { display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px; }
+        .text-line .tl-name { font-weight: 600; font-size: 0.85rem; }
+        .text-line .tl-parts { display: flex; gap: 6px; margin-bottom: 6px; }
+        .text-line .tl-part { flex: 1; }
+        .text-line .tl-part label { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 2px; }
+        .text-line .tl-part input { width: 100%; padding: 5px 8px; border: 1px solid var(--input-border);
+            border-radius: 3px; font-size: 0.8rem; box-sizing: border-box; font-family: monospace; background: var(--input-bg); color: var(--text); }
+        .text-line .tl-part-font { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; margin-top: 3px; }
+        .text-line .tl-part-font select { padding: 1px 2px; border: 1px solid var(--input-border); border-radius: 2px; font-size: 0.68rem; max-width: 72px; background: var(--input-bg); color: var(--text); }
+        .text-line .tl-part-font input[type="number"] { width: 36px; padding: 1px 2px; border: 1px solid var(--input-border); border-radius: 2px; font-size: 0.68rem; background: var(--input-bg); color: var(--text); }
+        .text-line .tl-part-font input[type="color"] { width: 20px; height: 18px; padding: 0; border: 1px solid var(--input-border); border-radius: 2px; cursor: pointer; }
+        .tl-tag-hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+        .tl-tag-hint span { color: var(--primary); cursor: pointer; }
+        .tl-tag-hint span:hover { text-decoration: underline; }
+
+        .logo-item { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 6px;
+            padding: 12px; margin-bottom: 8px; }
+        .logo-item .logo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .logo-item .logo-name { font-weight: 600; font-size: 0.85rem; }
+
+        label.toggle-switch { position: relative; display: inline-block; width: 36px; height: 20px; min-width: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--border); border-radius: 20px; transition: 0.2s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 14px; width: 14px;
+            left: 3px; bottom: 3px; background: var(--surface); border-radius: 50%; transition: 0.2s; }
+        .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+        .te-row { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+        .te-row label { font-size: 0.8rem; min-width: 55px; color: var(--text-muted); }
+        .te-row input, .te-row select { padding: 4px 8px; border: 1px solid var(--input-border); border-radius: 3px; font-size: 0.8rem; background: var(--input-bg); color: var(--text); }
+        .te-row input[type="number"] { width: 60px; }
+
+        /* Step 3 */
+        .review-grid { display: flex; flex-wrap: wrap; gap: 24px; }
+        .review-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px; width: 320px; max-width: 100%; box-sizing: border-box; background: var(--surface); }
+        .review-card img { width: 100%; border-radius: 4px; border: 1px solid var(--border-light); }
+        .review-card .info { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
+        .progress-bar { width: 100%; height: 6px; background: var(--bg-alt); border-radius: 3px; margin: 16px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s; width: 0%; }
+        .status-msg { text-align: center; color: var(--text-muted); margin: 12px 0; }
+        .download-btn { display: inline-block; padding: 8px 16px; background: #27ae60; color: #fff;
+            border-radius: 6px; text-decoration: none; font-size: 0.85rem; cursor: pointer; border: none; }
+        .download-btn:hover { background: #219a52; }
+        .error-msg { color: #e74c3c; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <a href="/" class="app-title">ExifBorder</a>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode" aria-label="Toggle dark/light mode">☀️</button>
+            <nav class="step-nav" id="stepNav">
+            <a href="#step1" class="step-link active" data-step="1">
+                <span class="step-number">1</span> Select Files
+            </a>
+            <span class="step-arrow">→</span>
+            <a href="#step2" class="step-link" data-step="2">
+                <span class="step-number">2</span> Layout & Preview
+            </a>
+            <span class="step-arrow">→</span>
+            <a href="#step3" class="step-link" data-step="3">
+                <span class="step-number">3</span> Review & Download
+            </a>
+        </nav>
+        </div>
+    </header>
+
+    <main class="app-main">
+
+        <!-- Step 1: File Selection & EXIF -->
+        <section id="step1" class="step-content">
+            <h2>Step 1: Select Images</h2>
+            <p>Upload JPEG files. All processing is done locally in your browser.</p>
+
+            <div class="drop-zone" id="dropZone">
+                <h2>Drop images here</h2>
+                <p>or click to browse — JPEG only</p>
+                <input type="file" id="fileInput" class="file-input-hidden" multiple accept=".jpg,.jpeg,image/jpeg">
+            </div>
+
+            <div class="images-table-wrapper" id="tableWrapper" style="display:none;">
+                <div class="actions-bar">
+                    <span class="image-count" id="imageCount"></span>
+                    <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+                </div>
+                <table class="images-table">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Dimensions</th>
+                            <th>Camera</th>
+                            <th>Lens</th>
+                            <th>Focal Length</th>
+                            <th>Aperture</th>
+                            <th>ISO</th>
+                            <th>Exposure</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="imagesTableBody"></tbody>
+                </table>
+
+                <div class="exif-summary" id="exifDetail" style="display:none;">
+                    <h3>Full EXIF Data: <span id="exifDetailName"></span></h3>
+                    <div class="exif-detail" id="exifDetailContent"></div>
+                </div>
+            </div>
+
+            <div class="actions-bar" style="margin-top: 32px;">
+                <button class="btn btn-primary" id="btnNext" disabled
+                        onclick="AppState.navigate(2)">
+                    Next: Layout & Preview →
+                </button>
+            </div>
+        </section>
+
+        <!-- Step 2: Layout & Preview -->
+        <section id="step2" class="step-content">
+            <h2>Step 2: Border, Logo & Text Layout</h2>
+
+            <div class="layout-grid">
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-placeholder" id="previewPlaceholder">
+                        Select an image and adjust settings to see preview
+                    </div>
+                    <img id="previewImage" src="" alt="Preview" style="display:none;">
+                </div>
+
+                <div class="controls-column">
+                    <!-- Border Settings -->
+                    <div class="panel" id="borderPanel">
+                        <h3>Border</h3>
+                        <div class="radio-group">
+                            <label><input type="radio" name="borderMode" value="custom" checked onchange="onBorderModeChange()"> Custom dimensions</label>
+                            <label><input type="radio" name="borderMode" value="aspect_ratio" onchange="onBorderModeChange()"> Fixed aspect ratio</label>
+                            <label><input type="radio" name="borderMode" value="target_ratio" onchange="onBorderModeChange()"> Target aspect ratio</label>
+                        </div>
+                        <div id="borderCustom">
+                            <div class="form-row"><label>Top (px)</label><input type="number" id="borderTop" value="100" min="0" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Bottom (px)</label><input type="number" id="borderBottom" value="200" min="0" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Left (px)</label><input type="number" id="borderLeft" value="80" min="0" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Right (px)</label><input type="number" id="borderRight" value="80" min="0" onchange="debouncePreview()"></div>
+                        </div>
+                        <div id="borderAspect" style="display:none;">
+                            <div class="form-row"><label>Auto-calc</label>
+                                <select id="autoParam" onchange="debouncePreview()">
+                                    <option value="c">Bottom (c)</option>
+                                    <option value="b">Top (b)</option>
+                                    <option value="a">Sides (a)</option>
+                                </select>
+                            </div>
+                            <div class="form-row"><label>Sides a (px)</label><input type="number" id="aspectA" value="80" min="0" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Top b (px)</label><input type="number" id="aspectB" value="100" min="0" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Bottom c (px)</label><input type="number" id="aspectC" value="200" min="0" onchange="debouncePreview()" disabled></div>
+                        </div>
+                        <div id="borderTargetRatio" style="display:none;">
+                            <div class="form-row"><label>Target ratio</label>
+                                <input type="number" id="targetW" value="16" min="1" onchange="debouncePreview()" style="width:55px;">
+                                <span>:</span>
+                                <input type="number" id="targetH" value="9" min="1" onchange="debouncePreview()" style="width:55px;">
+                            </div>
+                            <div class="form-row"><label>Auto-calc</label>
+                                <select id="targetAutoParam" onchange="debouncePreview()">
+                                    <option value="c">Bottom (c)</option>
+                                    <option value="b">Top (b)</option>
+                                    <option value="a">Sides (a)</option>
+                                </select>
+                            </div>
+                            <div class="form-row"><label>Sides a (px)</label><input type="number" id="targetA" value="80" min="0" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Top b (px)</label><input type="number" id="targetB" value="0" min="0" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Bottom c (px)</label><input type="number" id="targetC" value="200" min="0" onchange="debouncePreview()" disabled></div>
+                        </div>
+                        <div class="form-row" style="margin-top:8px;"><label>Color</label><input type="color" id="borderColor" value="#FFFFFF" onchange="debouncePreview()"></div>
+                    </div>
+
+                    <!-- Image Scaling -->
+                    <div class="panel" id="scalePanel">
+                        <h3>Image Scaling</h3>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">
+                            Original size: <strong id="originalSizeLabel">—</strong>
+                        </div>
+                        <div class="form-row">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="scaleEnabled" onchange="onScaleToggle()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="font-size:0.85rem; margin-left:6px;">Resize image</span>
+                        </div>
+                        <div id="scaleDimensions" style="display:none; margin-top:8px;">
+                            <div class="form-row"><label>Width (px)</label><input type="number" id="scaleWidth" value="1920" min="1" onchange="debouncePreview()"></div>
+                            <div class="form-row"><label>Height (px)</label><input type="number" id="scaleHeight" value="1080" min="1" onchange="debouncePreview()"></div>
+                        </div>
+                    </div>
+
+                    <!-- Logos -->
+                    <div class="panel">
+                        <h3>Logos</h3>
+                        <div id="logosList"></div>
+                        <button class="btn btn-secondary btn-sm" onclick="addLogo()" style="margin-top:8px;">+ Add Logo</button>
+                        <input type="file" id="logoFileInput" class="file-input-hidden" accept=".png,.jpg,.jpeg,.svg">
+                    </div>
+
+                    <!-- Text Lines -->
+                    <div class="panel" style="grid-column: 1 / -1;">
+                        <h3>Text Lines (Bottom Border)</h3>
+                        <div id="textLinesList"></div>
+                        <div style="margin-top:8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="addTextLine()">+ Add Line</button>
+                            <span style="font-size:0.8rem; color:var(--text-muted); margin-left:8px;">
+                                Use <code>{Tag Name}</code> to insert EXIF data
+                            </span>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <div class="form-row"><label>Line spacing</label><input type="number" id="lineSpacing" value="1.3" step="0.1" min="0.8" max="3" onchange="debouncePreview()" style="width:60px;"></div>
+                            <div class="form-row"><label>Line gap</label><input type="number" id="linesGap" value="8" min="0" max="50" onchange="debouncePreview()" style="width:60px;"> px</div>
+                            <div class="form-row"><label>Left margin</label><input type="number" id="textMarginLeft" value="40" min="0" onchange="debouncePreview()" style="width:60px;"> px</div>
+                            <div class="form-row"><label>Right margin</label><input type="number" id="textMarginRight" value="40" min="0" onchange="debouncePreview()" style="width:60px;"> px</div>
+                            <div class="form-row"><label>Bottom margin</label><input type="number" id="textMarginBottom" value="30" min="0" onchange="debouncePreview()" style="width:60px;"> px</div>
+                        </div>
+                    </div>
+
+                    <!-- Per-image selector -->
+                    <div class="panel">
+                        <h3>Preview Image</h3>
+                        <select id="previewImageSelect" onchange="debouncePreview()"></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions-bar" style="margin-top: 24px;">
+                <button class="btn btn-secondary" onclick="AppState.navigate(1)">← Back</button>
+                <button class="btn btn-primary" onclick="goToStep3()">Next: Review & Download →</button>
+            </div>
+        </section>
+
+        <!-- Step 3: Review & Download -->
+        <section id="step3" class="step-content">
+            <h2>Step 3: Review & Download</h2>
+            <p>Images will be rendered at full resolution with your configured borders, logos, and text overlays.</p>
+
+            <div class="actions-bar">
+                <button class="btn btn-secondary" onclick="AppState.navigate(2)">← Back</button>
+                <button class="btn btn-primary" id="btnRender" onclick="renderAll()">Render Images</button>
+                <button class="btn btn-primary" id="btnDownloadAll" style="display:none;" onclick="downloadAll()">Download All (ZIP)</button>
+            </div>
+
+            <div class="progress-bar" id="progressBar" style="display:none;">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="status-msg" id="statusMsg"></div>
+
+            <div class="review-grid" id="reviewGrid"></div>
+        </section>
+
+    </main>
+
+    <footer class="app-footer">
+        <small>ExifBorder – All processing is local. Images never leave your browser.</small>
+    </footer>
+
+    <!-- Scripts in dependency order -->
+    <script src="static/js/border.js"></script>
+    <script src="static/js/exif-reader.js"></script>
+    <script src="static/js/image-renderer.js"></script>
+    <script src="static/js/app-state.js"></script>
+    <script src="static/js/step1-files.js"></script>
+    <script src="static/js/step2-layout.js"></script>
+    <script src="static/js/step3-review.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            AppState.init();
+            // Theme toggle
+            var btn = document.getElementById('themeToggle');
+            var html = document.documentElement;
+            btn.textContent = html.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+            btn.addEventListener('click', function() {
+                var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('exifborder-theme', next);
+                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+            });
+        });
+    </script>
+</body>
+</html>

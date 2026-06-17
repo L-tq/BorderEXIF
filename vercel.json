@@ -2,6 +2,8 @@
   "version": 2,
   "routes": [
     { "src": "/static/(.*)", "dest": "/static/$1" },
+    { "src": "/app", "dest": "/app.html" },
+    { "src": "/app/(.*)", "dest": "/app.html" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }

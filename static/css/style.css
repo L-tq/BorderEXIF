@@ -72,9 +72,15 @@ body {
 }
 .app-title {
     margin: 0;
+    font-family: 'Space Grotesk', 'Roboto', 'Noto Sans SC', sans-serif;
     font-size: 1.3rem;
     font-weight: 700;
     letter-spacing: -0.02em;
+    text-decoration: none;
+    color: var(--text);
+}
+.app-title:hover {
+    color: var(--primary);
 }
 .header-right { display: flex; align-items: center; gap: 12px; }
 .step-nav { display: flex; align-items: center; gap: 8px; }
@@ -300,4 +306,145 @@ select {
     background: var(--input-bg);
     color: var(--text);
     border: 1px solid var(--input-border);
+}
+
+/* ============================================================
+   Mobile responsive — max-width: 768px
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* Header — stack vertically */
+    .app-header {
+        flex-wrap: wrap;
+        padding: 10px 16px;
+        gap: 8px;
+        position: relative;
+    }
+    .app-title {
+        font-size: 1.1rem;
+    }
+    .header-right {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Step nav — compact, no arrows */
+    .step-nav {
+        gap: 4px;
+    }
+    .step-link {
+        font-size: 0.78rem;
+        padding: 4px 8px;
+    }
+    .step-arrow {
+        display: none;
+    }
+    .theme-toggle {
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
+        position: absolute;
+        top: 10px;
+        right: 16px;
+    }
+
+    /* Main container */
+    .app-main {
+        padding: 0 12px;
+        margin: 12px auto;
+    }
+    .step-content h2 {
+        font-size: 1.1rem;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+        padding: 32px 16px;
+    }
+    .drop-zone h2 {
+        font-size: 1.1rem;
+    }
+
+    /* Images table — horizontal scroll */
+    .images-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .images-table {
+        min-width: 700px;
+        font-size: 0.8rem;
+    }
+    .images-table th,
+    .images-table td {
+        padding: 6px 8px;
+    }
+
+    /* EXIF detail */
+    .exif-detail {
+        max-height: 250px;
+    }
+
+    /* Step 2 — single column controls */
+    .layout-grid {
+        gap: 16px;
+    }
+    .controls-column {
+        grid-template-columns: 1fr;
+    }
+    .form-row {
+        flex-wrap: wrap;
+    }
+    .form-row label {
+        min-width: 60px;
+    }
+
+    /* Panels */
+    .panel {
+        padding: 12px;
+    }
+
+    /* Preview placeholder */
+    .preview-placeholder {
+        padding: 40px 16px;
+    }
+
+    /* Text lines — larger touch targets */
+    .text-line .tl-part-font select {
+        font-size: 0.75rem;
+        max-width: none;
+    }
+    .text-line .tl-part-font input[type="number"] {
+        font-size: 0.75rem;
+        width: 42px;
+    }
+    .text-line .tl-part-font input[type="color"] {
+        width: 24px;
+        height: 22px;
+    }
+
+    /* Review cards — fluid */
+    .review-card {
+        width: 100%;
+        max-width: 100%;
+    }
+    .review-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Actions — wrap buttons */
+    .actions-bar {
+        flex-wrap: wrap;
+    }
+    .btn {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+
+    /* Footer */
+    .app-footer {
+        margin-top: 24px;
+        padding: 14px;
+        font-size: 0.8rem;
+    }
 }
