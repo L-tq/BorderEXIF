@@ -79,6 +79,10 @@ body {
     text-decoration: none;
     color: var(--text);
 }
+.app-title img {
+    vertical-align: middle;
+    margin-right: 6px;
+}
 .app-title:hover {
     color: var(--primary);
 }

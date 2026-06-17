@@ -733,15 +733,32 @@
     /* ============================================================
        Theme toggle
        ============================================================ */
+    function switchFavicon(isDark) {
+        var suffix = isDark ? '-dark' : '';
+        var svg = document.getElementById('favicon-svg');
+        var png = document.getElementById('favicon-png');
+        var ico = document.getElementById('favicon-ico');
+        var apple = document.getElementById('favicon-apple');
+        var logo = document.getElementById('logo-favicon');
+        if (svg) svg.href = '/public/favicon/favicon' + suffix + '.svg';
+        if (png) png.href = '/public/favicon/favicon-96x96' + suffix + '.png';
+        if (ico) ico.href = '/public/favicon/favicon' + suffix + '.ico';
+        if (apple) apple.href = '/public/favicon/apple-touch-icon' + suffix + '.png';
+        if (logo) logo.src = '/public/favicon/favicon-96x96' + suffix + '.png';
+    }
+
     function initTheme() {
         if (!themeToggle) return;
         var html = document.documentElement;
-        themeToggle.textContent = html.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+        var isDark = html.getAttribute('data-theme') === 'dark';
+        themeToggle.textContent = isDark ? '☀️' : '🌙';
+        switchFavicon(isDark);
         themeToggle.addEventListener('click', function() {
             var next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', next);
             localStorage.setItem('exifborder-theme', next);
             themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+            switchFavicon(next === 'dark');
             /* Refresh particles color on theme change */
             if (particlesCanvas && ctx) {
                 ctx.clearRect(0, 0, canvasW, canvasH);

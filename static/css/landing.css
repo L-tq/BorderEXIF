@@ -223,6 +223,10 @@ body {
     letter-spacing: -0.02em;
     text-decoration: none;
 }
+.lp-logo img {
+    vertical-align: middle;
+    margin-right: 6px;
+}
 .lp-header-actions {
     display: flex;
     align-items: center;

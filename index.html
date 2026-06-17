@@ -6,11 +6,11 @@
     <title>ExifBorder — Client-Side Image Framing</title>
     <meta name="description" content="Frame your photos with EXIF metadata overlays. 100% client-side — images never leave your browser.">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="/public/favicon/favicon.svg">
-    <link rel="icon" type="image/png" sizes="96x96" href="/public/favicon/favicon-96x96.png">
-    <link rel="icon" type="image/x-icon" href="/public/favicon/favicon.ico">
-    <link rel="apple-touch-icon" href="/public/favicon/apple-touch-icon.png">
+    <!-- Favicon (swapped by JS for dark/light theme) -->
+    <link rel="icon" type="image/svg+xml" href="/public/favicon/favicon.svg" id="favicon-svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="/public/favicon/favicon-96x96.png" id="favicon-png">
+    <link rel="icon" type="image/x-icon" href="/public/favicon/favicon.ico" id="favicon-ico">
+    <link rel="apple-touch-icon" href="/public/favicon/apple-touch-icon.png" id="favicon-apple">
     <link rel="manifest" href="/public/favicon/site.webmanifest">
 
     <!-- Fonts: Inter (UI), Space Grotesk (headings), JetBrains Mono (EXIF/code) -->
@@ -96,7 +96,7 @@
 
         <!-- Header -->
         <header class="lp-header" id="lpHeader">
-            <a href="#" class="lp-logo">ExifBorder</a>
+            <a href="#" class="lp-logo"><img id="logo-favicon" src="/public/favicon/favicon-96x96.png" alt="" width="24" height="24"> ExifBorder</a>
             <div class="lp-header-actions">
                 <a href="/app" class="lp-nav-link">Open App</a>
                 <button class="lp-theme-toggle" id="lpThemeToggle" title="Toggle dark/light mode" aria-label="Toggle dark/light mode">🌙</button>
