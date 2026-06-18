@@ -1,9 +1,14 @@
 {
-  "version": 2,
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/app", "dest": "/app.html" },
-    { "src": "/app/(.*)", "dest": "/app.html" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "builds": [
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.txt", "use": "@vercel/static" },
+    { "src": "*.xml", "use": "@vercel/static" },
+    { "src": "public/**/*", "use": "@vercel/static" },
+    { "src": "static/**/*", "use": "@vercel/static" }
+  ],
+  "rewrites": [
+    { "source": "/app", "destination": "/app.html" },
+    { "source": "/app/(.*)", "destination": "/app.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
