@@ -1,6 +1,6 @@
 # ExifBorder
 
-Client-side image framing tool. Upload JPEG images, configure borders with EXIF metadata text overlays, add logos, and batch-render the output — all in the browser. No server required.
+Client-side image framing tool. Select JPEG images, configure borders with EXIF metadata text overlays, add logos, and batch-render the output — all in the browser. No server required.
 
 **Live at [border-exif.vercel.app](https://border-exif.vercel.app)** — [Open App](https://border-exif.vercel.app/app)
 
@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Opens at `http://localhost:3000`. The landing page introduces the tool; click **Open App** or **Upload & Frame** to enter the 3-step wizard.
+Opens at `http://localhost:3000`. The landing page introduces the tool; click **Open App** or **Start Framing** to enter the 3-step wizard.
 
 ## How it works
 
@@ -64,7 +64,7 @@ exifborder/
 │   │   ├── border.js         # Border dimension math
 │   │   ├── exif-reader.js    # EXIF parsing wrapper
 │   │   ├── image-renderer.js # Canvas rendering pipeline
-│   │   ├── step1-files.js    # File upload & EXIF display
+│   │   ├── step1-files.js    # File selection & EXIF display
 │   │   ├── step2-layout.js   # Border/text/logo configuration
 │   │   └── step3-review.js   # Batch render & download
 

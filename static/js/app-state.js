@@ -79,7 +79,7 @@ const AppState = (function () {
   function navigate(step) {
     if (step < 1 || step > 3) return;
     if (step >= 2 && _state.images.length === 0) {
-      alert('Please upload at least one image first.');
+      alert('Please select at least one image first.');
       return;
     }
     _state.currentStep = step;

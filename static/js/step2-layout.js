@@ -164,7 +164,7 @@
         renderLogos();
         debouncePreview();
       } catch (err) {
-        alert('Logo upload failed: ' + err.message);
+        alert('Failed to add logo: ' + err.message);
       }
       input.value = '';
     };
