@@ -4,9 +4,6 @@
     gsap.registerPlugin(ScrollTrigger, TextPlugin);
 
     /* ---- DOM refs ---- */
-    var preloader = document.getElementById('preloader');
-    var pfLines = document.querySelectorAll('.pf-line');
-    var preloaderText = document.querySelector('.preloader-text');
     var particlesCanvas = document.getElementById('particlesCanvas');
     var ctx = particlesCanvas ? particlesCanvas.getContext('2d') : null;
     var orbs = document.querySelectorAll('.orb');
@@ -37,33 +34,6 @@
 
     /* ---- Touch device detection ---- */
     var isTouch = window.matchMedia('(pointer: coarse)').matches;
-
-    /* ============================================================
-       Preloader
-       ============================================================ */
-    function initPreloader() {
-        var tl = gsap.timeline();
-        /* Top line: left to right */
-        tl.fromTo(pfLines[0], { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: 'power2.inOut' }, 0);
-        /* Right line: top to bottom */
-        tl.fromTo(pfLines[1], { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: 'power2.inOut' }, 0.15);
-        /* Bottom line: right to left */
-        tl.fromTo(pfLines[2], { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: 'power2.inOut' }, 0.3);
-        /* Left line: bottom to top */
-        tl.fromTo(pfLines[3], { scaleY: 0 }, { scaleY: 1, duration: 0.5, ease: 'power2.inOut' }, 0.45);
-        /* Pulse frame */
-        tl.to(pfLines, { opacity: 0.3, duration: 0.4, ease: 'power1.inOut' }, 0.9);
-        tl.to(pfLines, { opacity: 1, duration: 0.4, ease: 'power1.inOut' }, 1.3);
-        /* Dismiss */
-        tl.to(preloader, { opacity: 0, duration: 0.5, ease: 'power2.in', onComplete: function() {
-            preloader.classList.add('hidden');
-        }}, 1.6);
-        /* Count-up text */
-        var counter = { val: 0 };
-        gsap.to(counter, { val: 100, duration: 1.4, ease: 'power2.out', onUpdate: function() {
-            if (preloaderText) preloaderText.textContent = 'LOADING ' + Math.round(counter.val) + '%';
-        }});
-    }
 
     /* ============================================================
        Particles canvas
@@ -792,7 +762,6 @@
        Init
        ============================================================ */
     function init() {
-        initPreloader();
         initParticles();
         initOrbs();
         initHero();

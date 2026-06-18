@@ -67,46 +67,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/TextPlugin.min.js"></script>
 
-    <style>
-        /* Critical preloader styles — inlined to prevent FOUC */
-        #preloader {
-            position: fixed; inset: 0; z-index: 10000;
-            background: var(--lp-bg, #f8fafc);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-        }
-        [data-theme="dark"] #preloader { background: #060b14; }
-        .preloader-frame {
-            position: relative; width: 80px; height: 80px;
-        }
-        .preloader-frame .pf-line {
-            position: absolute; background: #2563eb;
-        }
-        [data-theme="dark"] .preloader-frame .pf-line { background: #06b6d4; }
-        .pf-top { top: 0; left: 0; width: 100%; height: 2px; transform-origin: left center; transform: scaleX(0); }
-        .pf-right { top: 0; right: 0; width: 2px; height: 100%; transform-origin: top center; transform: scaleY(0); }
-        .pf-bottom { bottom: 0; right: 0; width: 100%; height: 2px; transform-origin: right center; transform: scaleX(0); }
-        .pf-left { bottom: 0; left: 0; width: 2px; height: 100%; transform-origin: bottom center; transform: scaleY(0); }
-        .preloader-text {
-            margin-top: 24px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem; color: #94a3b8; letter-spacing: 0.15em;
-        }
-        [data-theme="dark"] .preloader-text { color: #64748b; }
-    </style>
 </head>
 <body>
-
-    <!-- Preloader -->
-    <div id="preloader">
-        <div class="preloader-frame">
-            <div class="pf-line pf-top"></div>
-            <div class="pf-line pf-right"></div>
-            <div class="pf-line pf-bottom"></div>
-            <div class="pf-line pf-left"></div>
-        </div>
-        <div class="preloader-text">LOADING 0%</div>
-    </div>
 
     <!-- Background elements -->
     <div class="bg-grid"></div>
