@@ -13,6 +13,7 @@
     var heroFrameLines = document.querySelectorAll('.hero-frame-line');
     var heroExifTyping = document.querySelector('.hero-exif-typing');
     var heroExifStrip = document.querySelector('.hero-exif-strip');
+    var heroImageAuthor = document.querySelector('.hero-image-author');
     var heroChips = document.querySelectorAll('.hero-chip');
     var heroBgDots = document.querySelectorAll('.hero-bg-dot');
     var heroCornerAccents = document.querySelectorAll('.hero-corner-accent');
@@ -195,10 +196,29 @@
                 onEnter: function() {
                     heroExifTyping.style.opacity = '1';
                     gsap.to(heroExifTyping, {
-                        text: 'f/2.8  1/500s  ISO 100  35mm',
+                        text: '75mm  f/1.4  1/125s  ISO 125',
                         duration: 2.5,
                         ease: 'none',
                         delay: 0.8
+                    });
+                },
+                once: true
+            });
+        }
+
+        /* ---- Author credit under image (typewriter) ---- */
+        if (heroImageAuthor) {
+            ScrollTrigger.create({
+                trigger: '#lp-hero',
+                start: 'top 50%',
+                onEnter: function() {
+                    heroImageAuthor.style.opacity = '1';
+                    heroImageAuthor.textContent = '';
+                    gsap.to(heroImageAuthor, {
+                        text: 'Photo by 派大扔',
+                        duration: 1.2,
+                        ease: 'none',
+                        delay: 1.6
                     });
                 },
                 once: true
@@ -213,7 +233,7 @@
                 onEnter: function() {
                     heroExifStrip.style.opacity = '1';
                     gsap.to(heroExifStrip, {
-                        text: 'Camera: Sony A7IV  •  Lens: FE 24-70mm f/2.8 GM II  •  GPS: 37.7749° N, 122.4194° W',
+                        text: 'Camera: Sony ZV-E10  •  Lens: Viltrox AF 75mm F1.2 Pro',
                         duration: 3,
                         ease: 'none',
                         delay: 1.2

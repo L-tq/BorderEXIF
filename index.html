@@ -3,8 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ExifBorder — Client-Side Image Framing</title>
-    <meta name="description" content="Frame your photos with EXIF metadata overlays. 100% client-side — images never leave your browser.">
+    <title>ExifBorder — Add EXIF Borders to Your Photos | Free Client-Side Tool</title>
+    <meta name="description" content="Frame your photos with EXIF metadata overlays — camera, lens, aperture, ISO, and more. 100% client-side processing. No uploads, no servers, free.">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://border.exif.tools/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="ExifBorder — Add EXIF Borders to Your Photos | Free Client-Side Tool">
+    <meta property="og:description" content="Frame your photos with EXIF metadata overlays — camera, lens, aperture, ISO, and more. 100% client-side processing. No uploads, no servers, free.">
+    <meta property="og:image" content="https://border.exif.tools/public/og-image.png">
+    <meta property="og:url" content="https://border.exif.tools/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ExifBorder — Add EXIF Borders to Your Photos | Free Client-Side Tool">
+    <meta name="twitter:description" content="Frame your photos with EXIF metadata overlays — camera, lens, aperture, ISO, and more. 100% client-side processing. No uploads, no servers, free.">
+    <meta name="twitter:image" content="https://border.exif.tools/public/og-image.png">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "ExifBorder",
+      "url": "https://border.exif.tools",
+      "description": "Frame your photos with EXIF metadata overlays — add borders, text, and logos. 100% client-side processing.",
+      "applicationCategory": "MultimediaApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "browserRequirements": "Requires JavaScript"
+    }
+    </script>
 
     <!-- Favicon (swapped by JS for dark/light theme) -->
     <link rel="icon" type="image/svg+xml" href="/public/favicon/favicon.svg" id="favicon-svg">
@@ -117,11 +146,11 @@
 
             <!-- Floating EXIF chips -->
             <div class="hero-chips" aria-hidden="true">
-                <div class="hero-chip" data-depth="0.4" style="top:15%;left:8%;">f/2.8</div>
-                <div class="hero-chip" data-depth="0.6" style="top:22%;right:10%;">1/500s</div>
-                <div class="hero-chip" data-depth="0.3" style="top:65%;left:5%;">ISO 100</div>
-                <div class="hero-chip" data-depth="0.5" style="top:70%;right:12%;">35mm</div>
-                <div class="hero-chip" data-depth="0.7" style="top:40%;left:3%;">Sony A7IV</div>
+                <div class="hero-chip" data-depth="0.4" style="top:15%;left:8%;">f/1.4</div>
+                <div class="hero-chip" data-depth="0.6" style="top:22%;right:10%;">1/125s</div>
+                <div class="hero-chip" data-depth="0.3" style="top:65%;left:5%;">ISO 125</div>
+                <div class="hero-chip" data-depth="0.5" style="top:70%;right:12%;">75mm</div>
+                <div class="hero-chip" data-depth="0.7" style="top:40%;left:3%;">Sony ZV-E10</div>
             </div>
 
             <div class="lp-section-inner">
@@ -138,13 +167,14 @@
                         <div class="hero-corner-accent hca-br"></div>
                     </div>
 
-                    <!-- Image placeholder (3:4) -->
-                    <div class="hero-image-placeholder" id="heroImagePlaceholder">
-                        <div class="hero-scan-line"></div>
-                        <span class="hip-icon">🖼️</span>
-                        <span>Your Image</span>
-                        <span style="font-size:0.7rem;opacity:0.5;">3 : 4</span>
+                    <!-- Hero sample image (3:4) -->
+                    <div class="hero-image-block">
+                        <div class="hero-image-placeholder" id="heroImagePlaceholder">
+                            <img src="public/sample.jpg" alt="Sample framed photo with EXIF metadata border overlay" class="hero-sample-img" fetchpriority="high">
+                            <div class="hero-scan-line"></div>
+                        </div>
                         <div class="hero-exif-typing"></div>
+                        <div class="hero-image-author">Photo by 派大扔</div>
                     </div>
 
                     <!-- Hero text -->
@@ -189,7 +219,7 @@
                 </div>
 
                 <div class="oss-badge-wrap">
-                <a href="https://github.com/L-tq/BorderEXIF" target="_blank" rel="noopener" class="oss-badge" id="ossBadge">
+                <a href="https://github.com/L-tq/BorderEXIF" target="_blank" rel="noopener noreferrer" class="oss-badge" id="ossBadge">
                     <span class="oss-shockwave-ring"></span>
                     <div class="github-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -267,7 +297,7 @@
         <!-- CTA & Footer -->
         <section class="lp-section" id="lp-cta">
             <div class="lp-section-inner">
-                <div class="cta-scramble">Frame Your Vision</div>
+                <h2 class="cta-scramble">Frame Your Vision</h2>
                 <p class="cta-sub">Start framing in seconds. No account. No uploads. No fine print.</p>
                 <a href="/app" class="btn-shockwave" id="btnShockwave">
                     <span>Get Started Free</span>
@@ -275,9 +305,9 @@
                 </a>
 
                 <footer class="lp-footer">
-                    <a href="https://github.com/L-tq/BorderEXIF" target="_blank" rel="noopener" data-hover="false">GitHub</a>
+                    <a href="https://github.com/L-tq/BorderEXIF" target="_blank" rel="noopener noreferrer" data-hover="false">GitHub</a>
                     <a href="/app" data-hover="false">Open App</a>
-                    <a href="https://github.com/L-tq/BorderEXIF/blob/main/README.md" target="_blank" rel="noopener" data-hover="false">Documentation</a>
+                    <a href="https://github.com/L-tq/BorderEXIF/blob/main/README.md" target="_blank" rel="noopener noreferrer" data-hover="false">Documentation</a>
                     <div class="footer-note">ExifBorder — All processing is local. Images never leave your browser.</div>
                 </footer>
             </div>

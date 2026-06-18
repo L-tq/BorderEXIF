@@ -336,36 +336,41 @@ body {
 }
 .hero-image-placeholder {
     flex-shrink: 0;
-    width: 280px;
-    aspect-ratio: 3 / 4;
     border: 2px dashed var(--lp-border-strong);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    color: var(--lp-text-muted);
-    font-size: 0.85rem;
+    border-radius: 0;
     position: relative;
     overflow: hidden;
     background: var(--lp-surface);
+    line-height: 0;
 }
-.hero-image-placeholder .hip-icon {
-    font-size: 2.5rem;
-    opacity: 0.4;
+.hero-sample-img {
+    display: block;
+    max-width: 280px;
+    height: auto;
+}
+.hero-image-block {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.hero-image-author {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--lp-text-muted);
+    opacity: 0;
+    text-align: center;
 }
 .hero-exif-typing {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    right: 12px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     color: var(--lp-accent);
     opacity: 0;
     text-align: center;
     letter-spacing: 0.05em;
+    min-height: 1.2em;
 }
 .hero-text {
     flex: 1;
@@ -1038,7 +1043,24 @@ body {
 }
 
 /* ============================================================
-   Responsive — max-width 768px
+   Responsive — max-width 1024px (tablets)
+   ============================================================ */
+@media (max-width: 1024px) {
+    /* Move top chips down to avoid overlapping heading on tablets */
+    .hero-chip:nth-child(1) { top: 50% !important; left: 5% !important; }
+    .hero-chip:nth-child(2) { top: 45% !important; right: 7% !important; }
+    .hero-chip:nth-child(5) { top: 55% !important; left: 3% !important; }
+
+    /* Slightly reduce the gap between image and text */
+    .hero-layout { gap: 40px; }
+
+    /* Reduce heading size for tablet portrait */
+    .hero-text h1 { font-size: 2.8rem; }
+    .hero-text p { font-size: 1rem; max-width: 380px; }
+}
+
+/* ============================================================
+   Responsive — max-width 768px (phones)
    ============================================================ */
 @media (max-width: 768px) {
     :root { --lp-section-padding: 80px 20px; }
@@ -1057,7 +1079,8 @@ body {
     /* Hero */
     #lp-hero {
         padding-top: 100px;
-        padding-bottom: 24px;
+        padding-bottom: 60px;
+        min-height: auto;
     }
     .hero-layout {
         flex-direction: column-reverse;
@@ -1072,12 +1095,26 @@ body {
         margin-left: auto;
         margin-right: auto;
     }
-    .hero-image-placeholder {
-        width: 200px;
+    .hero-sample-img {
+        max-width: 200px;
     }
     .hero-frame-wrapper {
         inset: -24px;
     }
+    /* Move floating EXIF chips to image area, keep behind text */
+    .hero-chips {
+        z-index: 0;
+    }
+    .hero-chip {
+        font-size: 0.6rem;
+        padding: 3px 10px;
+        opacity: 0.55;
+    }
+    .hero-chip:nth-child(1) { top: 58% !important; left: 3% !important; }
+    .hero-chip:nth-child(2) { top: 52% !important; right: 5% !important; }
+    .hero-chip:nth-child(3) { top: 80% !important; left: 4% !important; }
+    .hero-chip:nth-child(4) { top: 74% !important; right: 6% !important; }
+    .hero-chip:nth-child(5) { top: 66% !important; left: 2% !important; }
 
     /* Stats */
     .stats-row {
