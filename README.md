@@ -67,8 +67,7 @@ exifborder/
 │   │   ├── step1-files.js    # File upload & EXIF display
 │   │   ├── step2-layout.js   # Border/text/logo configuration
 │   │   └── step3-review.js   # Batch render & download
-│   └── logos/
-│       └── Sony_Alpha_logo.svg
+
 ```
 
 ## Theme
