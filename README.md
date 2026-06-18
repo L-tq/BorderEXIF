@@ -2,6 +2,8 @@
 
 Client-side image framing tool. Upload JPEG images, configure borders with EXIF metadata text overlays, add logos, and batch-render the output — all in the browser. No server required.
 
+**Live at [border-exif.vercel.app](https://border-exif.vercel.app)** — [Open App](https://border-exif.vercel.app/app)
+
 ## Quick start
 
 ```bash
@@ -38,11 +40,11 @@ Static files only. Deploy to any static host (Vercel, Netlify, GitHub Pages, etc
 
 ### Vercel
 
+Deployed at [border-exif.vercel.app](https://border-exif.vercel.app). The included `vercel.json` configures static file serving and SPA-style rewrites.
+
 ```bash
 vercel
 ```
-
-The included `vercel.json` routes `/` → `index.html` and `/app` → `app.html`.
 
 ## Directory layout
 
