@@ -70,13 +70,6 @@ const ImageRenderer = (function () {
     return result;
   }
 
-  function getLineHeight(ctx, fontStyle, lineSpacing) {
-    const metrics = ctx.measureText('Ag');
-    const ascent = metrics.fontBoundingBoxAscent || metrics.actualBoundingBoxAscent || 0;
-    const descent = metrics.fontBoundingBoxDescent || metrics.actualBoundingBoxDescent || 0;
-    return ((ascent + descent) || 30) * lineSpacing;
-  }
-
   function resolvePlaceholders(text, exifData) {
     if (!text) return '';
     return text.replace(/\{([^}]+)\}/g, (match, tagName) => {
@@ -177,6 +170,14 @@ const ImageRenderer = (function () {
     return { text, fontString, color };
   }
 
+  function measureMetrics(ctx, fontString) {
+    ctx.font = fontString;
+    const m = ctx.measureText('Ag');
+    const ascent = m.fontBoundingBoxAscent || m.actualBoundingBoxAscent || 0;
+    const descent = m.fontBoundingBoxDescent || m.actualBoundingBoxDescent || 0;
+    return { ascent, descent, height: (ascent + descent) || 30 };
+  }
+
   function drawTextOverlays(ctx, imgW, imgH, border, textLines, globalConfig, exifData) {
     const bottomH = border.bottom;
     if (bottomH <= 0 || !textLines || !textLines.length) return;
@@ -186,6 +187,7 @@ const ImageRenderer = (function () {
     const bottomMargin = parseInt(globalConfig.text_margin_bottom) || 30;
     const lineSpacing = parseFloat(globalConfig.line_spacing) || 1.3;
     const linesGap = parseInt(globalConfig.text_lines_spacing) || 8;
+    const verticalAlign = globalConfig.text_vertical_align || 'baseline';
 
     const canvasW = imgW + border.left + border.right;
     const canvasH = imgH + border.top + border.bottom;
@@ -207,20 +209,24 @@ const ImageRenderer = (function () {
       ctx.font = right.fontString;
       const rightLines = wrapTextLines(ctx, right.text, right.fontString, null);
 
-      ctx.font = left.fontString;
-      const lhLeft = getLineHeight(ctx, left.fontString, lineSpacing);
-      ctx.font = center.fontString;
-      const lhCenter = getLineHeight(ctx, center.fontString, lineSpacing);
-      ctx.font = right.fontString;
-      const lhRight = getLineHeight(ctx, right.fontString, lineSpacing);
+      const leftMetrics = measureMetrics(ctx, left.fontString);
+      const centerMetrics = measureMetrics(ctx, center.fontString);
+      const rightMetrics = measureMetrics(ctx, right.fontString);
+
+      const lhLeft = leftMetrics.height * lineSpacing;
+      const lhCenter = centerMetrics.height * lineSpacing;
+      const lhRight = rightMetrics.height * lineSpacing;
       const lh = Math.max(lhLeft, lhCenter, lhRight) || 1;
 
       const maxSubs = Math.max(leftLines.length, centerLines.length, rightLines.length, 1);
       const lineTotalH = maxSubs * lh + linesGap;
 
       lineLayouts.push({ leftLines, leftFont: left.fontString, leftColor: left.color,
+        leftMetrics,
         centerLines, centerFont: center.fontString, centerColor: center.color,
+        centerMetrics,
         rightLines, rightFont: right.fontString, rightColor: right.color,
+        rightMetrics,
         lineHeight: lh, totalH: lineTotalH, maxSubs });
       totalH += lineTotalH;
     }
@@ -232,30 +238,61 @@ const ImageRenderer = (function () {
 
     for (const layout of lineLayouts) {
       for (let i = 0; i < layout.maxSubs; i++) {
-        const y = currentY + i * layout.lineHeight;
+        const rowTop = currentY + i * layout.lineHeight;
 
-        if (i < layout.leftLines.length && layout.leftLines[i]) {
-          ctx.font = layout.leftFont;
-          ctx.textAlign = 'left';
-          ctx.fillStyle = `rgb(${layout.leftColor.join(',')})`;
-          const yOff = (layout.lineHeight - getLineHeight(ctx, layout.leftFont, lineSpacing)) / 2;
-          ctx.fillText(layout.leftLines[i], leftMargin, y + yOff);
-        }
+        if (verticalAlign === 'center') {
+          // Each part vertically centered within the row
+          if (i < layout.leftLines.length && layout.leftLines[i]) {
+            ctx.font = layout.leftFont;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = `rgb(${layout.leftColor.join(',')})`;
+            const partH = layout.leftMetrics.height * lineSpacing;
+            const yOff = (layout.lineHeight - partH) / 2;
+            ctx.fillText(layout.leftLines[i], leftMargin, rowTop + yOff);
+          }
+          if (i < layout.centerLines.length && layout.centerLines[i]) {
+            ctx.font = layout.centerFont;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = `rgb(${layout.centerColor.join(',')})`;
+            const partH = layout.centerMetrics.height * lineSpacing;
+            const yOff = (layout.lineHeight - partH) / 2;
+            ctx.fillText(layout.centerLines[i], centerX, rowTop + yOff);
+          }
+          if (i < layout.rightLines.length && layout.rightLines[i]) {
+            ctx.font = layout.rightFont;
+            ctx.textAlign = 'right';
+            ctx.fillStyle = `rgb(${layout.rightColor.join(',')})`;
+            const partH = layout.rightMetrics.height * lineSpacing;
+            const yOff = (layout.lineHeight - partH) / 2;
+            ctx.fillText(layout.rightLines[i], canvasW - rightMargin, rowTop + yOff);
+          }
+        } else {
+          // Baseline alignment: all parts share the same baseline
+          const maxDescent = Math.max(
+            i < layout.leftLines.length && layout.leftLines[i] ? layout.leftMetrics.descent : 0,
+            i < layout.centerLines.length && layout.centerLines[i] ? layout.centerMetrics.descent : 0,
+            i < layout.rightLines.length && layout.rightLines[i] ? layout.rightMetrics.descent : 0
+          );
+          const commonY = rowTop + layout.lineHeight - maxDescent * lineSpacing;
 
-        if (i < layout.centerLines.length && layout.centerLines[i]) {
-          ctx.font = layout.centerFont;
-          ctx.textAlign = 'center';
-          ctx.fillStyle = `rgb(${layout.centerColor.join(',')})`;
-          const yOff = (layout.lineHeight - getLineHeight(ctx, layout.centerFont, lineSpacing)) / 2;
-          ctx.fillText(layout.centerLines[i], centerX, y + yOff);
-        }
-
-        if (i < layout.rightLines.length && layout.rightLines[i]) {
-          ctx.font = layout.rightFont;
-          ctx.textAlign = 'right';
-          ctx.fillStyle = `rgb(${layout.rightColor.join(',')})`;
-          const yOff = (layout.lineHeight - getLineHeight(ctx, layout.rightFont, lineSpacing)) / 2;
-          ctx.fillText(layout.rightLines[i], canvasW - rightMargin, y + yOff);
+          if (i < layout.leftLines.length && layout.leftLines[i]) {
+            ctx.font = layout.leftFont;
+            ctx.textAlign = 'left';
+            ctx.fillStyle = `rgb(${layout.leftColor.join(',')})`;
+            ctx.fillText(layout.leftLines[i], leftMargin, commonY);
+          }
+          if (i < layout.centerLines.length && layout.centerLines[i]) {
+            ctx.font = layout.centerFont;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = `rgb(${layout.centerColor.join(',')})`;
+            ctx.fillText(layout.centerLines[i], centerX, commonY);
+          }
+          if (i < layout.rightLines.length && layout.rightLines[i]) {
+            ctx.font = layout.rightFont;
+            ctx.textAlign = 'right';
+            ctx.fillStyle = `rgb(${layout.rightColor.join(',')})`;
+            ctx.fillText(layout.rightLines[i], canvasW - rightMargin, commonY);
+          }
         }
       }
       currentY += layout.totalH;
@@ -360,6 +397,7 @@ const ImageRenderer = (function () {
       text_margin_right: config.text_margin_right || 40,
       text_margin_bottom: config.text_margin_bottom || 30,
       text_lines_spacing: config.text_lines_spacing || 8,
+      text_vertical_align: config.text_vertical_align || 'baseline',
     };
 
     if (config.text_lines && config.text_lines.length) {

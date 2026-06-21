@@ -55,6 +55,7 @@
     document.getElementById('textMarginRight').value = config.text_margin_right || 200;
     document.getElementById('textMarginBottom').value = config.text_margin_bottom || 170;
     document.getElementById('linesGap').value = config.text_lines_spacing || 8;
+    document.getElementById('textVerticalAlign').value = config.text_vertical_align || 'baseline';
 
     onBorderModeChange();
   }
@@ -403,6 +404,7 @@
       text_margin_right: parseInt(document.getElementById('textMarginRight').value) || 0,
       text_margin_bottom: parseInt(document.getElementById('textMarginBottom').value) || 0,
       text_lines_spacing: parseInt(document.getElementById('linesGap').value) || 8,
+      text_vertical_align: document.getElementById('textVerticalAlign').value || 'baseline',
     };
   }
 
@@ -431,6 +433,7 @@
       text_margin_right: parseInt(document.getElementById('textMarginRight').value) || 200,
       text_margin_bottom: parseInt(document.getElementById('textMarginBottom').value) || 170,
       text_lines_spacing: parseInt(document.getElementById('linesGap').value) || 8,
+      text_vertical_align: document.getElementById('textVerticalAlign').value || 'baseline',
       scale: getScaleConfig(),
     };
 
@@ -461,6 +464,7 @@
     config.text_margin_right = parseInt(document.getElementById('textMarginRight').value) || 200;
     config.text_margin_bottom = parseInt(document.getElementById('textMarginBottom').value) || 170;
     config.text_lines_spacing = parseInt(document.getElementById('linesGap').value) || 8;
+    config.text_vertical_align = document.getElementById('textVerticalAlign').value || 'baseline';
     if (!config.scale) config.scale = {};
     Object.assign(config.scale, getScaleConfig());
     AppState.saveConfig(config);

@@ -20,6 +20,7 @@ const AppState = (function () {
     text_margin_right: 200,
     text_margin_bottom: 170,
     text_lines_spacing: 8,
+    text_vertical_align: 'baseline',
     scale: { enabled: true, width: 4000, height: 6000 },
   };
 
