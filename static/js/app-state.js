@@ -3,34 +3,24 @@
 const AppState = (function () {
   const DEFAULT_CONFIG = {
     border: {
-      mode: 'custom', top: 100, bottom: 200, left: 80, right: 80,
-      color: '#FFFFFF', auto_param: 'c', a: 80, b: 100, c: 200,
+      mode: 'target_ratio', top: 0, bottom: 500, left: 0, right: 0,
+      color: '#FFFFFF', auto_param: 'b', a: 0, b: 0, c: 500,
       target_w: 16, target_h: 9,
     },
     logos: [],
     text_lines: [
       {
-        left: { text: '', font_family: 'Roboto', font_size: 28, font_color: '#333333', font_weight: 'bold', font_style: 'normal' },
-        center: { text: '', font_family: 'Roboto', font_size: 28, font_color: '#333333', font_weight: 'bold', font_style: 'normal' },
-        right: { text: '', font_family: 'Roboto', font_size: 28, font_color: '#333333', font_weight: 'bold', font_style: 'normal' },
-      },
-      {
-        left: { text: '{Camera Model}', font_family: 'Roboto', font_size: 20, font_color: '#555555', font_weight: 'normal', font_style: 'normal' },
-        center: { text: '', font_family: 'Roboto', font_size: 20, font_color: '#555555', font_weight: 'normal', font_style: 'normal' },
-        right: { text: '{Lens Model}', font_family: 'Roboto', font_size: 20, font_color: '#555555', font_weight: 'normal', font_style: 'normal' },
-      },
-      {
-        left: { text: '', font_family: 'Roboto', font_size: 18, font_color: '#777777', font_weight: 'normal', font_style: 'normal' },
-        center: { text: '{Focal Length}    {Aperture}    {ISO}    {Exposure Time}', font_family: 'Roboto', font_size: 18, font_color: '#777777', font_weight: 'normal', font_style: 'normal' },
-        right: { text: '', font_family: 'Roboto', font_size: 18, font_color: '#777777', font_weight: 'normal', font_style: 'normal' },
+        left: { text: '', font_family: 'Roboto', font_size: 140, font_color: '#333333', font_weight: 'bold', font_style: 'normal' },
+        center: { text: '{Focal Length}   {Aperture}   {Exposure Time}   {ISO}', font_family: 'Roboto', font_size: 120, font_color: '#333333', font_weight: 'normal', font_style: 'normal' },
+        right: { text: '', font_family: 'Roboto', font_size: 140, font_color: '#333333', font_weight: 'bold', font_style: 'normal' },
       },
     ],
     line_spacing: 1.3,
-    text_margin_left: 40,
-    text_margin_right: 40,
-    text_margin_bottom: 30,
+    text_margin_left: 700,
+    text_margin_right: 200,
+    text_margin_bottom: 170,
     text_lines_spacing: 8,
-    scale: { enabled: false, width: 1920, height: 1080 },
+    scale: { enabled: true, width: 4000, height: 6000 },
   };
 
   let _state = {
@@ -158,10 +148,10 @@ const AppState = (function () {
       filename: file.name,
       dataUrl: dataUrl,
       path: dataUrl,
-      width: img.naturalWidth || 200,
-      height: img.naturalHeight || 60,
-      offset_x: 0,
-      offset_y: 0,
+      width: img.naturalWidth || 400,
+      height: img.naturalHeight || 400,
+      offset_x: 200,
+      offset_y: 60,
     };
   }
 

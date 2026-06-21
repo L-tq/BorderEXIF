@@ -34,26 +34,26 @@
     const radio = document.querySelector(`input[name="borderMode"][value="${mode}"]`);
     if (radio) radio.checked = true;
 
-    document.getElementById('borderTop').value = (b.top != null) ? b.top : 100;
-    document.getElementById('borderBottom').value = (b.bottom != null) ? b.bottom : 200;
-    document.getElementById('borderLeft').value = (b.left != null) ? b.left : 80;
-    document.getElementById('borderRight').value = (b.right != null) ? b.right : 80;
+    document.getElementById('borderTop').value = (b.top != null) ? b.top : 0;
+    document.getElementById('borderBottom').value = (b.bottom != null) ? b.bottom : 500;
+    document.getElementById('borderLeft').value = (b.left != null) ? b.left : 0;
+    document.getElementById('borderRight').value = (b.right != null) ? b.right : 0;
     document.getElementById('borderColor').value = b.color || '#FFFFFF';
-    document.getElementById('autoParam').value = b.auto_param || 'c';
-    document.getElementById('aspectA').value = (b.a != null) ? b.a : ((b.left != null) ? b.left : 80);
-    document.getElementById('aspectB').value = (b.b != null) ? b.b : ((b.top != null) ? b.top : 100);
-    document.getElementById('aspectC').value = (b.c != null) ? b.c : ((b.bottom != null) ? b.bottom : 200);
+    document.getElementById('autoParam').value = b.auto_param || 'b';
+    document.getElementById('aspectA').value = (b.a != null) ? b.a : 0;
+    document.getElementById('aspectB').value = (b.b != null) ? b.b : 0;
+    document.getElementById('aspectC').value = (b.c != null) ? b.c : 500;
     document.getElementById('targetW').value = b.target_w || 16;
     document.getElementById('targetH').value = b.target_h || 9;
-    document.getElementById('targetAutoParam').value = b.auto_param || 'c';
-    document.getElementById('targetA').value = (b.a != null) ? b.a : ((b.left != null) ? b.left : 80);
-    document.getElementById('targetB').value = (b.b != null) ? b.b : ((b.top != null) ? b.top : 0);
-    document.getElementById('targetC').value = (b.c != null) ? b.c : ((b.bottom != null) ? b.bottom : 200);
+    document.getElementById('targetAutoParam').value = b.auto_param || 'b';
+    document.getElementById('targetA').value = (b.a != null) ? b.a : 0;
+    document.getElementById('targetB').value = (b.b != null) ? b.b : 0;
+    document.getElementById('targetC').value = (b.c != null) ? b.c : 500;
 
     document.getElementById('lineSpacing').value = config.line_spacing || 1.3;
-    document.getElementById('textMarginLeft').value = config.text_margin_left || 40;
-    document.getElementById('textMarginRight').value = config.text_margin_right || 40;
-    document.getElementById('textMarginBottom').value = config.text_margin_bottom || 30;
+    document.getElementById('textMarginLeft').value = config.text_margin_left || 700;
+    document.getElementById('textMarginRight').value = config.text_margin_right || 200;
+    document.getElementById('textMarginBottom').value = config.text_margin_bottom || 170;
     document.getElementById('linesGap').value = config.text_lines_spacing || 8;
 
     onBorderModeChange();
@@ -141,10 +141,10 @@
         `<button class="btn-danger btn-xs" onclick="removeLogo(${idx})">✕</button>`,
         '</div>',
         `<div class="te-row"><label>File</label><span style="font-size:0.8rem;">${esc(logo.filename || '')}</span></div>`,
-        `<div class="te-row"><label>Width</label><input type="number" value="${logo.width || 200}" min="10" onchange="updateLogo(${idx},'width',this.value)"></div>`,
-        `<div class="te-row"><label>Height</label><input type="number" value="${logo.height || 60}" min="10" onchange="updateLogo(${idx},'height',this.value)"></div>`,
-        `<div class="te-row"><label>offset_x</label><input type="number" value="${logo.offset_x || 0}" onchange="updateLogo(${idx},'offset_x',this.value)"></div>`,
-        `<div class="te-row"><label>offset_y</label><input type="number" value="${logo.offset_y || 0}" onchange="updateLogo(${idx},'offset_y',this.value)"></div>`,
+        `<div class="te-row"><label>Width</label><input type="number" value="${logo.width || 400}" min="10" onchange="updateLogo(${idx},'width',this.value)"></div>`,
+        `<div class="te-row"><label>Height</label><input type="number" value="${logo.height || 400}" min="10" onchange="updateLogo(${idx},'height',this.value)"></div>`,
+        `<div class="te-row"><label>offset_x</label><input type="number" value="${logo.offset_x || 200}" onchange="updateLogo(${idx},'offset_x',this.value)"></div>`,
+        `<div class="te-row"><label>offset_y</label><input type="number" value="${logo.offset_y || 60}" onchange="updateLogo(${idx},'offset_y',this.value)"></div>`,
       ].join('');
       container.appendChild(div);
     });
@@ -427,9 +427,9 @@
       logos: config?.logos || [],
       text_lines: config?.text_lines || [],
       line_spacing: parseFloat(document.getElementById('lineSpacing').value) || 1.3,
-      text_margin_left: parseInt(document.getElementById('textMarginLeft').value) || 40,
-      text_margin_right: parseInt(document.getElementById('textMarginRight').value) || 40,
-      text_margin_bottom: parseInt(document.getElementById('textMarginBottom').value) || 30,
+      text_margin_left: parseInt(document.getElementById('textMarginLeft').value) || 700,
+      text_margin_right: parseInt(document.getElementById('textMarginRight').value) || 200,
+      text_margin_bottom: parseInt(document.getElementById('textMarginBottom').value) || 170,
       text_lines_spacing: parseInt(document.getElementById('linesGap').value) || 8,
       scale: getScaleConfig(),
     };
@@ -457,9 +457,9 @@
     if (!config.border) config.border = {};
     Object.assign(config.border, getCurrentBorderConfig());
     config.line_spacing = parseFloat(document.getElementById('lineSpacing').value) || 1.3;
-    config.text_margin_left = parseInt(document.getElementById('textMarginLeft').value) || 40;
-    config.text_margin_right = parseInt(document.getElementById('textMarginRight').value) || 40;
-    config.text_margin_bottom = parseInt(document.getElementById('textMarginBottom').value) || 30;
+    config.text_margin_left = parseInt(document.getElementById('textMarginLeft').value) || 700;
+    config.text_margin_right = parseInt(document.getElementById('textMarginRight').value) || 200;
+    config.text_margin_bottom = parseInt(document.getElementById('textMarginBottom').value) || 170;
     config.text_lines_spacing = parseInt(document.getElementById('linesGap').value) || 8;
     if (!config.scale) config.scale = {};
     Object.assign(config.scale, getScaleConfig());
