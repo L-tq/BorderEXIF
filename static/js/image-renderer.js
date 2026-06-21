@@ -1,14 +1,7 @@
 /* Image renderer — Canvas-based border, logo, text rendering. Ported from src/image_processor.py */
 
 const ImageRenderer = (function () {
-  const FONT_FAMILY_MAP = {
-    Roboto: { normal: 'Roboto', bold: '700 Roboto', thin: '300 Roboto', light: '300 Roboto', medium: '500 Roboto',
-      'bold italic': 'italic 700 Roboto', italic: 'italic Roboto', 'thin italic': 'italic 300 Roboto',
-      'light italic': 'italic 300 Roboto', 'medium italic': 'italic 500 Roboto' },
-    'Source Han Sans': { normal: 'Noto Sans SC', bold: '700 Noto Sans SC', italic: 'Noto Sans SC',
-      'bold italic': '700 Noto Sans SC', thin: '300 Noto Sans SC', light: '300 Noto Sans SC', medium: '500 Noto Sans SC',
-      'thin italic': '300 Noto Sans SC', 'light italic': '300 Noto Sans SC', 'medium italic': '500 Noto Sans SC' },
-  };
+  const FAMILY_NAME_MAP = { 'Roboto': 'Roboto', 'Source Han Sans': 'Noto Sans SC' };
 
   const PLACEHOLDER_MAP = {
     'Camera Make': 'camera_make', 'Camera Model': 'camera_model',
@@ -107,11 +100,7 @@ const ImageRenderer = (function () {
     const style = (part && part.font_style) || 'normal';
     const size = (part && part.font_size) || 22;
 
-    const familyMap = FONT_FAMILY_MAP[family] || FONT_FAMILY_MAP['Roboto'];
-    const styleKey = (weight !== 'normal' && style !== 'normal') ? weight + ' ' + style :
-      (style !== 'normal') ? style :
-      (weight !== 'normal') ? weight : 'normal';
-    const fontFamily = familyMap[styleKey] || familyMap['normal'] || 'Roboto';
+    const fontFamily = FAMILY_NAME_MAP[family] || FAMILY_NAME_MAP['Roboto'] || 'Roboto';
 
     const fontWeight = (weight === 'bold' || weight === 'medium') ? '700' :
       (weight === 'thin' || weight === 'light') ? '300' :
