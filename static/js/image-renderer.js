@@ -267,31 +267,24 @@ const ImageRenderer = (function () {
             ctx.fillText(layout.rightLines[i], canvasW - rightMargin, rowTop + yOff);
           }
         } else {
-          // Baseline alignment: all parts share the same baseline
-          const maxDescent = Math.max(
-            i < layout.leftLines.length && layout.leftLines[i] ? layout.leftMetrics.descent : 0,
-            i < layout.centerLines.length && layout.centerLines[i] ? layout.centerMetrics.descent : 0,
-            i < layout.rightLines.length && layout.rightLines[i] ? layout.rightMetrics.descent : 0
-          );
-          const commonY = rowTop + layout.lineHeight - maxDescent * lineSpacing;
-
+          // Baseline alignment: all parts share the same baseline at rowTop
           if (i < layout.leftLines.length && layout.leftLines[i]) {
             ctx.font = layout.leftFont;
             ctx.textAlign = 'left';
             ctx.fillStyle = `rgb(${layout.leftColor.join(',')})`;
-            ctx.fillText(layout.leftLines[i], leftMargin, commonY);
+            ctx.fillText(layout.leftLines[i], leftMargin, rowTop);
           }
           if (i < layout.centerLines.length && layout.centerLines[i]) {
             ctx.font = layout.centerFont;
             ctx.textAlign = 'center';
             ctx.fillStyle = `rgb(${layout.centerColor.join(',')})`;
-            ctx.fillText(layout.centerLines[i], centerX, commonY);
+            ctx.fillText(layout.centerLines[i], centerX, rowTop);
           }
           if (i < layout.rightLines.length && layout.rightLines[i]) {
             ctx.font = layout.rightFont;
             ctx.textAlign = 'right';
             ctx.fillStyle = `rgb(${layout.rightColor.join(',')})`;
-            ctx.fillText(layout.rightLines[i], canvasW - rightMargin, commonY);
+            ctx.fillText(layout.rightLines[i], canvasW - rightMargin, rowTop);
           }
         }
       }
